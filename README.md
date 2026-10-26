@@ -4,7 +4,6 @@ Sistem inteligent de parcare bazat pe STM32F429 si protocolul MODBUS RTU.
 
 **Disciplina:** Proiectarea Sistemelor Inglobate  
 **Organizatie:** PSI-2026  
-**Echipa:** 2 studenti  
 **Platforme:** macOS si Windows  
 **Stadiu:** In dezvoltare
 
@@ -66,7 +65,7 @@ Senzori, LED-uri si bariere virtuale
 
 ## 6. Organizarea echipei
 
-### Studentul 1 - Embedded Systems
+### Firmware si sisteme inglobate
 
 - Configurarea microcontrolerului.
 - Implementarea firmware-ului STM32.
@@ -74,7 +73,7 @@ Senzori, LED-uri si bariere virtuale
 - Implementarea MODBUS Slave.
 - Testarea firmware-ului in Renode.
 
-### Studentul 2 - Software Development
+### Backend si interfata
 
 - Dezvoltarea backend-ului.
 - Implementarea MODBUS Master.
