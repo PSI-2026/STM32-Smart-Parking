@@ -1,0 +1,81 @@
+# ==========================================
+# STM32 Smart Parking - Git Ignore
+# macOS / Windows
+# ==========================================
+
+# Operating Systems
+.DS_Store
+.AppleDouble
+Thumbs.db
+Desktop.ini
+
+# ==========================================
+# STM32CubeIDE / Eclipse
+# ==========================================
+
+# Local IDE workspace
+.metadata/
+.recommenders/
+
+# Firmware build output
+Debug/
+Release/
+
+# Compiled firmware artifacts
+*.elf
+*.hex
+*.bin
+*.map
+*.list
+*.o
+*.d
+*.su
+*.cyclo
+
+# ==========================================
+# Node.js / React / TypeScript
+# ==========================================
+
+node_modules/
+dist/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# ==========================================
+# Code Editors
+# ==========================================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==========================================
+# Python (optional tools)
+# ==========================================
+
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ==========================================
+# Renode
+# ==========================================
+
+# Generated Renode artifacts
+*.dump
+*.trace
