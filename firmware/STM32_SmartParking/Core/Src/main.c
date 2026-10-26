@@ -107,23 +107,25 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    /* PARK1 sensor and LED control */
 	  GPIO_PinState park1_state = HAL_GPIO_ReadPin(
       PARK1_SENSOR_GPIO_Port,
 			PARK1_SENSOR_Pin
 		);
 
-    if (park1_state == GPIO_PIN_SET) 
+    if (park1_state == GPIO_PIN_SET)
     {
       /* Vehicle detected: parking spot occupied */
       HAL_GPIO_WritePin(
-        PARK1_GREEN_LED_GPIO_Port, 
-        PARK1_GREEN_LED_Pin, 
+        PARK1_GREEN_LED_GPIO_Port,
+        PARK1_GREEN_LED_Pin,
         GPIO_PIN_RESET
       );
 
       HAL_GPIO_WritePin(
-        PARK1_RED_LED_GPIO_Port, 
-        PARK1_RED_LED_Pin, 
+        PARK1_RED_LED_GPIO_Port,
+        PARK1_RED_LED_Pin,
         GPIO_PIN_SET
       );
     }
@@ -131,21 +133,132 @@ int main(void)
     {
       /* No vehicle detected: parking spot available */
       HAL_GPIO_WritePin(
-        PARK1_GREEN_LED_GPIO_Port, 
-        PARK1_GREEN_LED_Pin, 
+        PARK1_GREEN_LED_GPIO_Port,
+        PARK1_GREEN_LED_Pin,
         GPIO_PIN_SET
       );
 
       HAL_GPIO_WritePin(
-        PARK1_RED_LED_GPIO_Port, 
-        PARK1_RED_LED_Pin, 
+        PARK1_RED_LED_GPIO_Port,
+        PARK1_RED_LED_Pin,
         GPIO_PIN_RESET
       );
     }
 
+    /* PARK2 sensor and LED control */
+    GPIO_PinState park2_state = HAL_GPIO_ReadPin(
+      PARK2_SENSOR_GPIO_Port,
+      PARK2_SENSOR_Pin
+    );
+
+    if (park2_state == GPIO_PIN_SET)
+    {
+      /* Vehicle detected: parking spot occupied */
+      HAL_GPIO_WritePin(
+        PARK2_GREEN_LED_GPIO_Port,
+        PARK2_GREEN_LED_Pin,
+        GPIO_PIN_RESET
+      );
+
+      HAL_GPIO_WritePin(
+        PARK2_RED_LED_GPIO_Port,
+        PARK2_RED_LED_Pin,
+        GPIO_PIN_SET
+      );
+    }
+    else
+    {
+      /* No vehicle detected: parking spot available */
+      HAL_GPIO_WritePin(
+        PARK2_GREEN_LED_GPIO_Port,
+        PARK2_GREEN_LED_Pin,
+        GPIO_PIN_SET
+      );
+
+      HAL_GPIO_WritePin(
+        PARK2_RED_LED_GPIO_Port,
+        PARK2_RED_LED_Pin,
+        GPIO_PIN_RESET
+      );
+    }
+
+
+/* PARK3 sensor and LED control */
+GPIO_PinState park3_state = HAL_GPIO_ReadPin(
+    PARK3_SENSOR_GPIO_Port,
+    PARK3_SENSOR_Pin
+);
+
+if (park3_state == GPIO_PIN_SET)
+{
+    /* Vehicle detected: parking spot occupied */
+    HAL_GPIO_WritePin(
+        PARK3_GREEN_LED_GPIO_Port,
+        PARK3_GREEN_LED_Pin,
+        GPIO_PIN_RESET
+    );
+
+    HAL_GPIO_WritePin(
+        PARK3_RED_LED_GPIO_Port,
+        PARK3_RED_LED_Pin,
+        GPIO_PIN_SET
+    );
+  }
+  else
+  {
+     /* No vehicle detected: parking spot available */
+    HAL_GPIO_WritePin(
+        PARK3_GREEN_LED_GPIO_Port,
+        PARK3_GREEN_LED_Pin,
+        GPIO_PIN_SET
+    );
+
+    HAL_GPIO_WritePin(
+        PARK3_RED_LED_GPIO_Port,
+        PARK3_RED_LED_Pin,
+        GPIO_PIN_RESET
+    );
+  }
+
+  /* PARK4 sensor and LED control */
+  GPIO_PinState park4_state = HAL_GPIO_ReadPin(
+      PARK4_SENSOR_GPIO_Port,
+      PARK4_SENSOR_Pin
+  );
+
+  if (park4_state == GPIO_PIN_SET)
+  {
+    /* Vehicle detected: parking spot occupied */
+    HAL_GPIO_WritePin(
+        PARK4_GREEN_LED_GPIO_Port,
+        PARK4_GREEN_LED_Pin,
+        GPIO_PIN_RESET
+    );
+
+    HAL_GPIO_WritePin(
+        PARK4_RED_LED_GPIO_Port,
+        PARK4_RED_LED_Pin,
+        GPIO_PIN_SET
+    );
+
+  }
+  else
+  {
+    /* No vehicle detected: parking spot available */
+    HAL_GPIO_WritePin(
+        PARK4_GREEN_LED_GPIO_Port,
+        PARK4_GREEN_LED_Pin,
+        GPIO_PIN_SET
+    );
+
+    HAL_GPIO_WritePin(
+        PARK4_RED_LED_GPIO_Port,
+        PARK4_RED_LED_Pin,
+        GPIO_PIN_RESET
+    );
+  }
+
     HAL_Delay(50); // Delay for 50 milliseconds
-
-
   }
   /* USER CODE END 3 */
 }
