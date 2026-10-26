@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "parking_manager.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,7 +46,9 @@ TIM_HandleTypeDef htim4;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+volatile uint8_t parking_occupancy_status = 0U;  // Variable to store the parking occupancy status
 
+ParkingManager parking_manager;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,7 +99,7 @@ int main(void)
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  ParkingManager_Init(&parking_manager);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -108,155 +110,11 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-    /* PARK1 sensor and LED control */
-	  GPIO_PinState park1_state = HAL_GPIO_ReadPin(
-      PARK1_SENSOR_GPIO_Port,
-			PARK1_SENSOR_Pin
-		);
+	/* Update all parking spots */
+	ParkingManager_Update(&parking_manager);
 
-    if (park1_state == GPIO_PIN_SET)
-    {
-      /* Vehicle detected: parking spot occupied */
-      HAL_GPIO_WritePin(
-        PARK1_GREEN_LED_GPIO_Port,
-        PARK1_GREEN_LED_Pin,
-        GPIO_PIN_RESET
-      );
-
-      HAL_GPIO_WritePin(
-        PARK1_RED_LED_GPIO_Port,
-        PARK1_RED_LED_Pin,
-        GPIO_PIN_SET
-      );
-    }
-    else
-    {
-      /* No vehicle detected: parking spot available */
-      HAL_GPIO_WritePin(
-        PARK1_GREEN_LED_GPIO_Port,
-        PARK1_GREEN_LED_Pin,
-        GPIO_PIN_SET
-      );
-
-      HAL_GPIO_WritePin(
-        PARK1_RED_LED_GPIO_Port,
-        PARK1_RED_LED_Pin,
-        GPIO_PIN_RESET
-      );
-    }
-
-    /* PARK2 sensor and LED control */
-    GPIO_PinState park2_state = HAL_GPIO_ReadPin(
-      PARK2_SENSOR_GPIO_Port,
-      PARK2_SENSOR_Pin
-    );
-
-    if (park2_state == GPIO_PIN_SET)
-    {
-      /* Vehicle detected: parking spot occupied */
-      HAL_GPIO_WritePin(
-        PARK2_GREEN_LED_GPIO_Port,
-        PARK2_GREEN_LED_Pin,
-        GPIO_PIN_RESET
-      );
-
-      HAL_GPIO_WritePin(
-        PARK2_RED_LED_GPIO_Port,
-        PARK2_RED_LED_Pin,
-        GPIO_PIN_SET
-      );
-    }
-    else
-    {
-      /* No vehicle detected: parking spot available */
-      HAL_GPIO_WritePin(
-        PARK2_GREEN_LED_GPIO_Port,
-        PARK2_GREEN_LED_Pin,
-        GPIO_PIN_SET
-      );
-
-      HAL_GPIO_WritePin(
-        PARK2_RED_LED_GPIO_Port,
-        PARK2_RED_LED_Pin,
-        GPIO_PIN_RESET
-      );
-    }
-
-
-/* PARK3 sensor and LED control */
-GPIO_PinState park3_state = HAL_GPIO_ReadPin(
-    PARK3_SENSOR_GPIO_Port,
-    PARK3_SENSOR_Pin
-);
-
-if (park3_state == GPIO_PIN_SET)
-{
-    /* Vehicle detected: parking spot occupied */
-    HAL_GPIO_WritePin(
-        PARK3_GREEN_LED_GPIO_Port,
-        PARK3_GREEN_LED_Pin,
-        GPIO_PIN_RESET
-    );
-
-    HAL_GPIO_WritePin(
-        PARK3_RED_LED_GPIO_Port,
-        PARK3_RED_LED_Pin,
-        GPIO_PIN_SET
-    );
-  }
-  else
-  {
-     /* No vehicle detected: parking spot available */
-    HAL_GPIO_WritePin(
-        PARK3_GREEN_LED_GPIO_Port,
-        PARK3_GREEN_LED_Pin,
-        GPIO_PIN_SET
-    );
-
-    HAL_GPIO_WritePin(
-        PARK3_RED_LED_GPIO_Port,
-        PARK3_RED_LED_Pin,
-        GPIO_PIN_RESET
-    );
-  }
-
-  /* PARK4 sensor and LED control */
-  GPIO_PinState park4_state = HAL_GPIO_ReadPin(
-      PARK4_SENSOR_GPIO_Port,
-      PARK4_SENSOR_Pin
-  );
-
-  if (park4_state == GPIO_PIN_SET)
-  {
-    /* Vehicle detected: parking spot occupied */
-    HAL_GPIO_WritePin(
-        PARK4_GREEN_LED_GPIO_Port,
-        PARK4_GREEN_LED_Pin,
-        GPIO_PIN_RESET
-    );
-
-    HAL_GPIO_WritePin(
-        PARK4_RED_LED_GPIO_Port,
-        PARK4_RED_LED_Pin,
-        GPIO_PIN_SET
-    );
-
-  }
-  else
-  {
-    /* No vehicle detected: parking spot available */
-    HAL_GPIO_WritePin(
-        PARK4_GREEN_LED_GPIO_Port,
-        PARK4_GREEN_LED_Pin,
-        GPIO_PIN_SET
-    );
-
-    HAL_GPIO_WritePin(
-        PARK4_RED_LED_GPIO_Port,
-        PARK4_RED_LED_Pin,
-        GPIO_PIN_RESET
-    );
-  }
+	/* Store occupancy status for future MODBUS integration */
+	parking_occupancy_status = ParkingManager_GetOccupancyMask(&parking_manager);
 
     HAL_Delay(50); // Delay for 50 milliseconds
   }
