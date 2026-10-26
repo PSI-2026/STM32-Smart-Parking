@@ -79,3 +79,9 @@ venv/
 # Generated Renode artifacts
 *.dump
 *.trace
+
+# Eclipse metadata accidentally created at repository root
+/.project
+
+# macOS-specific Eclipse metadata
+.osx.project
