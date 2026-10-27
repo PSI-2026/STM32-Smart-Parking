@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "parking_manager.h"
+#include "barrier_controller.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,8 +48,12 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 volatile uint8_t parking_occupancy_status = 0U;  // Variable to store the parking occupancy status
+volatile uint8_t entrance_request_pending = 0U;
 
 ParkingManager parking_manager;
+
+BarrierController entrance_barrier;
+BarrierController exit_barrier;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,6 +105,9 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   ParkingManager_Init(&parking_manager);
+
+  BarrierController_Init(&entrance_barrier);
+  BarrierController_Init(&exit_barrier);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -115,6 +123,18 @@ int main(void)
 
 	/* Store occupancy status for future MODBUS integration */
 	parking_occupancy_status = ParkingManager_GetOccupancyMask(&parking_manager);
+
+	if (entrance_request_pending != 0U)
+	{
+		entrance_request_pending = 0U;
+
+		uint8_t available_spaces = ParkingManager_GetAvailableCount(&parking_manager);
+
+		(void)BarrierController_RequestEntranceOpen(
+				&entrance_barrier,
+				available_spaces
+		);
+	}
 
     HAL_Delay(50); // Delay for 50 milliseconds
   }
