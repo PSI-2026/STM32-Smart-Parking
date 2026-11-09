@@ -28,6 +28,7 @@ typedef struct
 } BarrierController;
 
 void BarrierController_Init(BarrierController *barrier);
+/* Idempotent while open; ignored when a sensor fault is latched. */
 void BarrierController_Open(BarrierController *barrier);
 void BarrierController_ReportSensorFault(BarrierController *barrier);
 

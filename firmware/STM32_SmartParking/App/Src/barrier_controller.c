@@ -20,6 +20,13 @@ void BarrierController_Init(BarrierController *barrier)
 
 void BarrierController_Open(BarrierController *barrier)
 {
+	/* Repeated requests must preserve passage history and fault state. */
+	if (barrier == NULL || barrier->sensor_fault ||
+	    barrier->state == BARRIER_STATE_OPEN)
+	{
+		return;
+	}
+
 	barrier->state = BARRIER_STATE_OPEN;
 	barrier->cycle_state = BARRIER_CYCLE_WAITING_FOR_PASSAGE;
 }

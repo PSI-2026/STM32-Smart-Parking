@@ -175,6 +175,19 @@ int main(void)
       VehicleDetector_Update(&entrance_passage_detector);
       VehicleDetector_Update(&exit_passage_detector);
 
+      /* Latch reported faults before opening requests or automatic closing. */
+      if (VehicleDetector_HasFault(&entrance_detector) ||
+          VehicleDetector_HasFault(&entrance_passage_detector))
+      {
+          BarrierController_ReportSensorFault(&entrance_barrier);
+      }
+
+      if (VehicleDetector_HasFault(&exit_detector) ||
+          VehicleDetector_HasFault(&exit_passage_detector))
+      {
+          BarrierController_ReportSensorFault(&exit_barrier);
+      }
+
       bool entrance_detected =
           VehicleDetector_IsDetected(&entrance_detector);
 
