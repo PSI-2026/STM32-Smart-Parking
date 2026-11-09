@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "parking_manager.h"
 #include "barrier_controller.h"
+#include "vehicle_detector.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,11 +50,22 @@ UART_HandleTypeDef huart1;
 /* USER CODE BEGIN PV */
 volatile uint8_t parking_occupancy_status = 0U;  // Variable to store the parking occupancy status
 volatile uint8_t entrance_request_pending = 0U;
+volatile uint8_t exit_request_pending = 0U;
 
 ParkingManager parking_manager;
 
 BarrierController entrance_barrier;
 BarrierController exit_barrier;
+
+VehicleDetector entrance_detector;
+VehicleDetector exit_detector;
+
+bool previous_entrance_detected = false;
+bool previous_exit_detected = false;
+
+VehicleDetector entrance_passage_detector;
+VehicleDetector exit_passage_detector;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,6 +120,34 @@ int main(void)
 
   BarrierController_Init(&entrance_barrier);
   BarrierController_Init(&exit_barrier);
+
+  VehicleDetector_Init(
+      &entrance_detector,
+      ENTRANCE_SENSOR_GPIO_Port,
+      ENTRANCE_SENSOR_Pin,
+      GPIO_PIN_RESET
+  );
+
+  VehicleDetector_Init(
+      &exit_detector,
+      EXIT_SENSOR_GPIO_Port,
+      EXIT_SENSOR_Pin,
+      GPIO_PIN_RESET
+  );
+
+  VehicleDetector_Init(
+      &entrance_passage_detector,
+      ENTRANCE_PASSAGE_SENSOR_GPIO_Port,
+      ENTRANCE_PASSAGE_SENSOR_Pin,
+      GPIO_PIN_RESET
+  );
+
+  VehicleDetector_Init(
+      &exit_passage_detector,
+      EXIT_PASSAGE_SENSOR_GPIO_Port,
+      EXIT_PASSAGE_SENSOR_Pin,
+      GPIO_PIN_RESET
+  );
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -118,25 +158,82 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	/* Update all parking spots */
-	ParkingManager_Update(&parking_manager);
+      // 1. Update parking spots
+      ParkingManager_Update(&parking_manager);
 
-	/* Store occupancy status for future MODBUS integration */
-	parking_occupancy_status = ParkingManager_GetOccupancyMask(&parking_manager);
+      // 2. Store occupancy status
+      parking_occupancy_status =
+          ParkingManager_GetOccupancyMask(&parking_manager);
 
-	if (entrance_request_pending != 0U)
-	{
-		entrance_request_pending = 0U;
+      // 3. Read entrance and exit sensors
 
-		uint8_t available_spaces = ParkingManager_GetAvailableCount(&parking_manager);
+      // Read vehicle detection sensors
+      VehicleDetector_Update(&entrance_detector);
+      VehicleDetector_Update(&exit_detector);
 
-		(void)BarrierController_RequestEntranceOpen(
-				&entrance_barrier,
-				available_spaces
-		);
-	}
+      // Read barrier passage sensors
+      VehicleDetector_Update(&entrance_passage_detector);
+      VehicleDetector_Update(&exit_passage_detector);
 
-    HAL_Delay(50); // Delay for 50 milliseconds
+      bool entrance_detected =
+          VehicleDetector_IsDetected(&entrance_detector);
+
+      bool exit_detected =
+          VehicleDetector_IsDetected(&exit_detector);
+
+      // 4. Detect new vehicle arrival
+      if (entrance_detected && !previous_entrance_detected)
+      {
+          entrance_request_pending = 1U;
+      }
+
+      if (exit_detected && !previous_exit_detected)
+      {
+          exit_request_pending = 1U;
+      }
+
+      // 5. Save previous sensor states
+      previous_entrance_detected = entrance_detected;
+      previous_exit_detected = exit_detected;
+
+      // 6. Process entrance request
+      if (entrance_request_pending != 0U)
+      {
+          entrance_request_pending = 0U;
+
+          uint8_t available_spaces =
+              ParkingManager_GetAvailableCount(&parking_manager);
+
+          (void)BarrierController_RequestEntranceOpen(
+              &entrance_barrier,
+              available_spaces
+          );
+      }
+
+      // 7. Process exit request
+      if (exit_request_pending != 0U)
+      {
+          exit_request_pending = 0U;
+
+          (void)BarrierController_RequestExitOpen(&exit_barrier);
+      }
+
+      /* Update entrance barrier passage state */
+      uint32_t now_ms = HAL_GetTick();
+
+      BarrierController_UpdatePassage(
+          &entrance_barrier,
+          VehicleDetector_IsDetected(&entrance_passage_detector),
+          now_ms
+      );
+
+      BarrierController_UpdatePassage(
+          &exit_barrier,
+          VehicleDetector_IsDetected(&exit_passage_detector),
+          now_ms
+      );
+
+      HAL_Delay(50);
   }
   /* USER CODE END 3 */
 }
@@ -497,11 +594,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : D4_Pin D5_Pin D6_Pin D7_Pin
-                           D8_Pin D9_Pin D10_Pin D11_Pin
+  /*Configure GPIO pins : ENTRANCE_SENSOR_Pin EXIT_SENSOR_Pin ENTRANCE_PASSAGE_SENSOR_Pin EXIT_PASSAGE_SENSOR_Pin */
+  GPIO_InitStruct.Pin = ENTRANCE_SENSOR_Pin|EXIT_SENSOR_Pin|ENTRANCE_PASSAGE_SENSOR_Pin|EXIT_PASSAGE_SENSOR_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : D6_Pin D7_Pin D10_Pin D11_Pin
                            D12_Pin NBL0_Pin NBL1_Pin */
-  GPIO_InitStruct.Pin = D4_Pin|D5_Pin|D6_Pin|D7_Pin
-                          |D8_Pin|D9_Pin|D10_Pin|D11_Pin
+  GPIO_InitStruct.Pin = D6_Pin|D7_Pin|D10_Pin|D11_Pin
                           |D12_Pin|NBL0_Pin|NBL1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -541,8 +642,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : TE_Pin EXIT_SENSOR_Pin */
-  GPIO_InitStruct.Pin = TE_Pin|EXIT_SENSOR_Pin;
+  /*Configure GPIO pins : TE_Pin EXIT_SENSORD5_Pin */
+  GPIO_InitStruct.Pin = TE_Pin|EXIT_SENSORD5_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
