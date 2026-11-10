@@ -6,6 +6,7 @@ Sistem inteligent de parcare bazat pe STM32F429 si protocolul MODBUS RTU.
 **Organizatie:** PSI-2026  
 **Platforme:** macOS si Windows  
 **Stadiu:** In dezvoltare
+**Echipa:** 3 studenti
 
 ## 1. Descriere
 
@@ -65,23 +66,35 @@ Senzori, LED-uri si bariere virtuale
 
 ## 6. Organizarea echipei
 
-### Firmware si sisteme inglobate
+Proiectul este dezvoltat de o echipa formata din **3 studenti**, cu responsabilitati distribuite pe trei domenii principale.
 
-- Configurarea microcontrolerului.
-- Implementarea firmware-ului STM32.
-- Controlul senzorilor, LED-urilor si barierelor.
-- Implementarea MODBUS Slave.
-- Testarea firmware-ului in Renode.
+### Embedded Systems & Firmware
 
-### Backend si interfata
+- Configurarea microcontrolerului STM32F429.
+- Implementarea firmware-ului in limbajul C.
+- Gestionarea senzorilor, LED-urilor si servomotoarelor.
+- Implementarea protocolului MODBUS RTU Slave.
+- Simularea si depanarea firmware-ului folosind Renode si GDB.
 
-- Dezvoltarea backend-ului.
-- Implementarea MODBUS Master.
-- Dezvoltarea interfetei grafice.
-- Gestionarea vehiculelor si platilor.
-- Implementarea jurnalizarii.
+### Backend & Communication
 
-Integrarea, testarea finala si documentatia sunt responsabilitati comune.
+- Dezvoltarea serverului Node.js si TypeScript.
+- Implementarea comunicatiei MODBUS RTU Master.
+- Gestionarea sesiunilor de parcare si a vehiculelor.
+- Calcularea duratei si a taxelor de parcare.
+- Implementarea sistemului de plata simulata si a jurnalizarii evenimentelor.
+
+### Frontend & Dashboard
+
+- Dezvoltarea interfetei web folosind React si TypeScript.
+- Realizarea reprezentarii grafice a parcarii.
+- Afisarea starii locurilor de parcare in timp real.
+- Dezvoltarea interfetei pentru vehicule, bariere si plati.
+- Integrarea interfetei cu API-ul backend.
+
+### Responsabilitati comune
+
+Toti membrii echipei participa la integrarea componentelor, testare, documentatie, code review si solutionarea problemelor tehnice.
 
 ## 7. Dezvoltare colaborativa
 
