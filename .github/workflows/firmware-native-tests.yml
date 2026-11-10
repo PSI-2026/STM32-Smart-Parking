@@ -1,0 +1,16 @@
+name: Firmware native tests
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  native-tests:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run C unit tests
+        run: make -C firmware/tests test
+      - name: Run address and undefined behavior sanitizers
+        run: make -C firmware/tests sanitize
