@@ -42,6 +42,38 @@ describe('simulated backend contract', () => {
     expect(getBarrierState(api.getSnapshot(), api.getSnapshot().barriers[0])).toBe('UNKNOWN');
   });
 
+  it.each(['entry', 'exit'] as const)('records vehicle presence at %s without authorizing access or modifying sessions', async (barrierId) => {
+    const before = api.getSnapshot();
+    const result = await execute({ type: 'set-barrier-presence', barrierId, present: true });
+    const state = api.getSnapshot();
+    expect(result.status).toBe('done');
+    expect(state.barriers.find((barrier) => barrier.id === barrierId)?.vehiclePresent).toBe(true);
+    expect(state.barriers.map((barrier) => barrier.state)).toEqual(before.barriers.map((barrier) => barrier.state));
+    expect(state.sessions).toEqual(before.sessions);
+    expect(state.slots).toEqual(before.slots);
+    expect(state.events[0].message).toContain('vehicul detectat manual');
+  });
+
+  it('preserves a barrier presence input offline without presenting it as a valid observation', async () => {
+    await execute({ type: 'set-node-online', nodeId: 'S3', online: false });
+    await execute({ type: 'set-barrier-presence', barrierId: 'entry', present: true });
+    expect(api.getSnapshot().barriers[0].vehiclePresent).toBe(true);
+    expect(getBarrierState(api.getSnapshot(), api.getSnapshot().barriers[0])).toBe('UNKNOWN');
+    await execute({ type: 'set-node-online', nodeId: 'S3', online: true });
+    expect(api.getSnapshot().barriers[0].vehiclePresent).toBe(true);
+    expect(getBarrierState(api.getSnapshot(), api.getSnapshot().barriers[0])).toBe('CLOSED');
+  });
+
+  it('does not let presence sensors bypass obstacles or payment authorization', async () => {
+    await execute({ type: 'set-barrier-presence', barrierId: 'entry', present: true });
+    await execute({ type: 'set-obstacle', barrierId: 'entry', active: true });
+    expect((await execute({ type: 'enter', plate: 'B 123 DEM' })).status).toBe('rejected');
+    await execute({ type: 'set-barrier-presence', barrierId: 'exit', present: true });
+    expect((await execute({ type: 'exit', sessionId: 'demo-1' })).status).toBe('rejected');
+    expect(api.getSnapshot().sessions).toHaveLength(2);
+    expect(api.getSnapshot().slots[0].occupied).toBe(true);
+  });
+
   it('updates a manual sensor and the journal without inventing a session or operating barriers', async () => {
     const before = api.getSnapshot();
     const result = await execute({ type: 'set-slot-sensor', slotId: 2, occupied: true });

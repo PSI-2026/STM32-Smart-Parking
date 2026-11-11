@@ -31,8 +31,8 @@ function initialSnapshot(now: number): ParkingSnapshot {
       { id: 4, nodeId: 'S2', occupied: false, sessionId: null },
     ],
     barriers: [
-      { id: 'entry', nodeId: 'S3', state: 'CLOSED', obstacle: false, feedback: 'estimated' },
-      { id: 'exit', nodeId: 'S4', state: 'CLOSED', obstacle: false, feedback: 'estimated' },
+      { id: 'entry', nodeId: 'S3', state: 'CLOSED', obstacle: false, vehiclePresent: false, feedback: 'estimated' },
+      { id: 'exit', nodeId: 'S4', state: 'CLOSED', obstacle: false, vehiclePresent: false, feedback: 'estimated' },
     ],
     sessions: [makeSession('demo-1', 'B 101 DEM', 1, 74, false), makeSession('demo-2', 'CJ 24 DEM', 3, 38, true)],
     events: [
@@ -131,6 +131,15 @@ export function createMockParkingApi(options: { now?: () => number; delayMs?: nu
       state = { ...state, transport: action.transport };
       event(`Transport simulat selectat · ${action.transport === 'TCP' ? 'Ethernet / TCP' : 'USB / RTU'}`);
       return command(commandId, 'done', 'Transportul simulat a fost schimbat.');
+    }
+    if (action.type === 'set-barrier-presence') {
+      const barrier = state.barriers.find((item) => item.id === action.barrierId);
+      if (!barrier) return reject('Senzorul de prezență selectat nu există.');
+      if (barrier.vehiclePresent !== action.present) {
+        barrierPatch(action.barrierId, { vehiclePresent: action.present });
+        event(`${barrier.nodeId} · ${action.present ? 'vehicul detectat' : 'senzor de prezență eliberat'} manual (simulare)`);
+      }
+      return command(commandId, 'done', `Prezența vehiculului la ${action.barrierId === 'entry' ? 'intrare' : 'ieșire'} a fost actualizată în simulator.`);
     }
     if (action.type === 'set-obstacle') {
       const barrier = state.barriers.find((item) => item.id === action.barrierId)!;

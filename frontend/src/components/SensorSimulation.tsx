@@ -1,4 +1,4 @@
-import { getSlotState } from '../api/selectors';
+import { getSlotState, isNodeAvailable } from '../api/selectors';
 import type { ParkingAction, ParkingSnapshot } from '../api/types';
 import { Icon } from './Icon';
 import './SensorSimulation.css';
@@ -20,8 +20,12 @@ export function SensorSimulation({ snapshot, pending, onAction, headingId = 'sen
       <div className="panel-heading sensor-panel-heading">
         <div>
           <h2 id={headingId}>Simulare senzori</h2>
-          <p>Activează sau eliberează manual senzorii celor patru locuri.</p>
+          <p>Simulează ocuparea locurilor, prezența vehiculelor și obstacolele.</p>
         </div>
+      </div>
+
+      <div className="sensor-section-heading">
+        <h3>Locuri de parcare</h3>
         <div className="sensor-bulk-actions">
           <button
             className="button secondary small"
@@ -83,9 +87,57 @@ export function SensorSimulation({ snapshot, pending, onAction, headingId = 'sen
         })}
       </div>
 
+      <div className="sensor-section-heading"><h3>Bariere</h3></div>
+      <div className="sensor-grid sensor-barrier-grid">
+        {snapshot.barriers.map((barrier) => {
+          const direction = barrier.id === 'entry' ? 'intrare' : 'ieșire';
+          const available = isNodeAvailable(snapshot, barrier.nodeId);
+          return (
+            <div className="sensor-card" key={barrier.id}>
+              <div className="sensor-card-heading">
+                <div className="sensor-identity">
+                  <span className="sensor-icon"><Icon name="car" size={20} /></span>
+                  <div><strong>{barrier.id === 'entry' ? 'Intrare' : 'Ieșire'}</strong><small>Stația {barrier.nodeId}</small></div>
+                </div>
+                <span className={`sensor-observation ${available ? 'free' : 'unknown'}`}><span className="status-dot" />{available ? 'Conectat' : 'Necunoscut'}</span>
+              </div>
+              <label className="sensor-switch presence">
+                <span>Prezență vehicul</span>
+                <span className="sensor-switch-control">
+                  <span className={`sensor-input-value ${barrier.vehiclePresent ? 'on' : ''}`} aria-hidden="true">{barrier.vehiclePresent ? 'ON' : 'OFF'}</span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    aria-label={`Vehicul detectat la ${direction}`}
+                    checked={barrier.vehiclePresent}
+                    disabled={pending}
+                    onChange={(event) => void onAction({ type: 'set-barrier-presence', barrierId: barrier.id, present: event.target.checked })}
+                  />
+                </span>
+              </label>
+              <label className="sensor-switch obstacle">
+                <span>Obstacol</span>
+                <span className="sensor-switch-control">
+                  <span className={`sensor-input-value ${barrier.obstacle ? 'on' : ''}`} aria-hidden="true">{barrier.obstacle ? 'ON' : 'OFF'}</span>
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    aria-label={`Obstacol la ${direction}`}
+                    checked={barrier.obstacle}
+                    disabled={pending}
+                    onChange={(event) => void onAction({ type: 'set-obstacle', barrierId: barrier.id, active: event.target.checked })}
+                  />
+                </span>
+              </label>
+              {!available && <p className="sensor-card-note">Date indisponibile. Valorile senzorilor rămân memorate în simulator.</p>}
+            </div>
+          );
+        })}
+      </div>
+
       <div className="sensor-panel-note">
         <Icon name="info" size={16} />
-        <p>Aceste comutatoare schimbă doar senzorii simulați. Sesiunile și plățile se gestionează separat.</p>
+        <p>Prezența vehiculului nu deschide automat bariera. Gestionează sesiunile, plata și autorizarea accesului din Parcare.</p>
       </div>
     </section>
   );

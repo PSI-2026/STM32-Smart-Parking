@@ -1,10 +1,10 @@
 # Smart Parking — frontend
 
-Prima versiune a interfeței Studentului 3: React + TypeScript + Vite, cu un adaptor de backend simulat. Interfața este în română și funcționează fără STM32, Renode, backend sau serviciul Python pornit.
+Interfață în limba română pentru monitorizarea și simularea unei parcări cu patru locuri și două bariere, realizată cu React, TypeScript și Vite. Demo-ul funcționează în browser, fără backend sau hardware. Conexiunea HTTP cu backend-ul se verifică separat.
 
 ## Pornire
 
-Este necesar Node.js 22.12+ (verificare locală cu Node.js 24.11.1).
+Este necesar Node.js 22.12+ și npm. Din rădăcina proiectului:
 
 ```sh
 cd frontend
@@ -12,73 +12,95 @@ npm ci
 npm run dev
 ```
 
-Deschide `http://127.0.0.1:5173`. Portul este fix: dacă este ocupat, oprește procesul care îl folosește sau modifică `vite.config.ts`.
+Deschide `http://127.0.0.1:5173`. Portul este fix; dacă frontend-ul rulează deja, folosește instanța existentă.
 
-```sh
-npm test
-npm run build
-npm run preview
+Pe Windows, dacă `npm` nu funcționează în PowerShell, folosește `npm.cmd`, de exemplu `npm.cmd run dev`.
+
+## Funcționalități
+
+- **Parcare:** ocuparea locurilor, controlul accesului, sesiuni, căutare după număr de înmatriculare și plăți simulate.
+- **Sistem:** starea nodurilor simulate, verificarea conexiunii cu backend-ul, simularea senzorilor, exportul jurnalului în JSON și resetarea demo-ului.
+
+La pornire există două sesiuni fictive: **B 101 DEM** în P01, neplătită, și **CJ 24 DEM** în P03, plătită. Pentru a demonstra fluxul:
+
+1. Alege **Intrare vehicul** și introdu un număr fictiv. Simulatorul alocă un loc liber și deschide temporar bariera de intrare.
+2. Alege **Plată demo** pentru sesiunea respectivă. Tariful este de 5 RON pentru fiecare oră începută; plata singură nu eliberează locul.
+3. Alege **Autorizează ieșirea**. După verificarea plății și a interblocărilor, simulatorul deschide bariera de ieșire, încheie sesiunea și eliberează locul.
+
+**Simulare senzori**, disponibilă din ambele pagini, permite modificarea ocupării P01–P04 și a prezenței vehiculelor sau obstacolelor la bariere. **Toate libere** și **Toate ocupate** modifică numai senzorii locurilor. Acționarea senzorilor nu creează sau închide sesiuni și nu înregistrează plăți. Prezența unui vehicul nu deschide automat bariera, iar un obstacol blochează accesul prin bariera respectivă.
+
+Deconectarea unui nod din **Sistem** face datele lui necunoscute. Deconectarea gateway-ului G face toate locurile și barierele necunoscute. **Resetează demo** cere confirmare și reface starea inițială.
+
+## Conexiune cu backend-ul
+
+În **Sistem → Starea sistemului → Backend API**, apasă **Testează conexiunea**. Verificarea rulează la cerere, are o limită de 5 secunde și afișează rezultatul, versiunea API și ora ultimului test.
+
+Contract verificat în branch-ul `feature/backend-fastapi`, commit `afd19879acb0e8b104dc2d7ef15bf8bf14d07dcc`: `GET /api/v1/health`, cu răspunsul:
+
+```json
+{"status":"healthy","service":"smart-parking-backend","version":"0.1.0"}
 ```
 
-Pe Windows, dacă PowerShell alege un `npm.ps1` nefuncțional, folosește `npm.cmd ci` și `npm.cmd run dev`. Nu este necesară modificarea politicii PowerShell. În cazul unei instalări Node incomplete, repară instalarea Node/npm înainte de utilizare.
+Vite transmite cererile `/api/*` către `http://127.0.0.1:8000`, atât în `dev`, cât și în `preview`. Pentru altă adresă, creează `frontend/.env.local` folosind [.env.example](.env.example):
 
-## Ce poți demonstra
-
-1. La pornire sunt două vehicule fictive: B 101 DEM în P01 (neplătit) și CJ 24 DEM în P03 (plătit în simulator).
-2. Alege **Intrare vehicul**, introdu `B 123 DEM` și confirmă. Simulatorul alocă primul loc liber și actualizează sesiunea, ocuparea și bariera S3. Bariera se închide automat după animația simulată.
-3. Alege **Plată demo** pentru o sesiune neplătită. Plata este înregistrată o singură dată, inclusiv dacă operația se repetă. Plata singură nu eliberează locul și nu deschide ieșirea.
-4. Alege **Autorizează ieșirea** pentru o sesiune plătită. Simulatorul deschide S4, încheie sesiunea și simulează eliberarea senzorului. În **Toate sesiunile** vezi și sesiunile încheiate.
-5. În **Diagnostic**, deconectează S1. P01/P02 devin necunoscute; nu sunt numărate ca libere sau ocupate. Intrările și ieșirile noi sunt suspendate până la recuperarea datelor.
-6. Deconectează G: toate locurile și barierele devin necunoscute, iar operațiile de parcare sunt blocate. Reconectează G pentru reluarea observațiilor simulate.
-7. Activează un obstacol la ieșire. S4 intră în interblocare, iar ieșirea este blocată chiar dacă sesiunea este plătită.
-8. În **Jurnal**, exportă evenimentele și rezultatele comenzilor în JSON. Exportul este marcat `simulation`.
-9. În **Parcare**, apasă **Simulare senzori**, lângă schemă. Panoul lateral permite comutarea P01–P04: **ON** înseamnă vehicul detectat, **OFF** înseamnă senzor liber. **Toate libere** / **Toate ocupate** modifică toate cele patru intrări. Fiecare schimbare este jurnalizată. Închide panoul cu X sau Escape; focalizarea revine la butonul de deschidere. Aceleași controale sunt disponibile și în **Diagnostic**.
-
-Pagina **Parcare** afișează un singur rezumat al locurilor libere, ocupate și necunoscute. Numărul sesiunilor active, încasările simulate și tariful sunt disponibile în **Sesiuni**. Antetul afișează o singură etichetă **Mod simulare**; versiunea demo și bannerul repetitiv au fost eliminate.
-
-Controalele senzorilor nu creează sesiuni, nu înregistrează plăți și nu închid sesiuni. Dacă eliberezi senzorul unui loc cu sesiune activă, asocierea rămâne până la ieșirea autorizată. O intrare nouă primește un loc cu senzor liber și fără sesiune asociată. Selectarea unui loc cu sesiune deschide sesiunea respectivă, chiar dacă senzorul a fost eliberat manual; un vehicul detectat fără sesiune este indicat explicit.
-
-Poți modifica senzorii și cu stația sau gateway-ul deconectat. Poziția ON/OFF este păstrată în simulator; starea observată rămâne **Necunoscut** până la reconectare. Informațiile de conectivitate și vechime nu sunt resetate prin acționarea senzorilor.
-
-**Resetează demo** cere confirmare și reface datele inițiale. Starea este păstrată numai în memoria paginii; reîncărcarea o resetează. Nu există tranzacții reale, persistență sau conexiuni de transport reale. Alegerea TCP/USB schimbă numai profilul simulatorului.
-
-## Organizare și integrare cu Studentul 2
-
-```text
-src/
-  api/
-    types.ts             contractul intern al UI
-    selectors.ts         disponibilitate, vechime și ocupare validă
-    mockParkingApi.ts    serverul simulat, fără dependență de React
-    index.ts             adaptorul ales
-  components/            formular acces, simboluri, panou de simulare senzori
-  hooks/useParking.ts    abonare la snapshot și heartbeat demo
-  lib/format.ts          afișarea sumelor și duratelor
-  App.tsx                paginile dashboard-ului
-  styles.css             layout adaptabil desktop/mobil
-  theme.css              paleta albastră și culorile interfeței
+```dotenv
+BACKEND_URL=http://127.0.0.1:8000
 ```
 
-UI consumă interfața `ParkingApi`, nu registre MODBUS sau GPIO. Adaptorul expune snapshot, abonare, comenzi cu ID, actualizare și reset demo. Datele includ nodul sursă, conectivitatea, momentul ultimei observații și starea comenzilor. Observațiile mai vechi de 2000 ms sunt tratate ca necunoscute. Pragul este propus în documentația proiectului și trebuie reconfirmat la integrare.
+Repornește Vite după schimbarea adresei. Browserul trimite cererile prin proxy-ul frontend, fără modificări CORS în backend.
 
-Pentru adaptorul HTTP real trebuie convenite împreună: schema și versiunea API, URL-ul backend-ului, datele temporale/calitatea, citire periodică sau push, codurile erorilor și traseul comenzilor `accepted → executing → done/rejected/unknown`. Niciun endpoint al backend-ului Node nu este presupus implementat în această versiune. `GET /snapshot` din arhitectură descrie interfața propusă Node–Python; nu este revendicat aici ca endpoint Node–React existent.
+<details>
+<summary>Pornirea backend-ului din branch-ul separat, în PowerShell</summary>
 
-Taxa afișată vine din snapshot. Calculul se află exclusiv în adaptorul simulat: 5 RON/oră începută, cost zero la durată zero, tarif salvat per sesiune, sumă înghețată la plata simulată. Backend-ul real va avea autoritatea asupra tarifului, sesiunilor și autorizațiilor de ieșire. Adaptorul real nu trebuie să recalculeze autoritar aceste valori în browser.
+Sunt necesare Python 3.12+ și `uv`. Din rădăcina proiectului, extrage backend-ul într-un director ignorat de Git, păstrând branch-ul frontend curent:
 
-Poziția barierei este etichetată **estimată**. În demo, ieșirea și eliberarea senzorului sunt combinate pentru a demonstra fluxul; pe hardware, execuția comenzii, senzorul și închiderea sesiunii trebuie corelate ca evenimente distincte. Nu există feedback mecanic sau autorizații reale cu TTL în acest frontend.
+```powershell
+git fetch --no-tags origin feature/backend-fastapi
+New-Item -ItemType Directory -Path frontend/.backend-test.local -Force | Out-Null
+git archive --format=zip --output=frontend/.backend-test.local/source.zip origin/feature/backend-fastapi backend
+Expand-Archive -LiteralPath frontend/.backend-test.local/source.zip -DestinationPath frontend/.backend-test.local -Force
+uv sync --frozen --project frontend/.backend-test.local/backend
+Set-Location frontend/.backend-test.local/backend
+.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
 
-## Verificări și limite
+Acești pași folosesc versiunea descărcată a branch-ului backend. Păstrează terminalul deschis cât timp testezi conexiunea. Dacă ai pregătit deja acest director, pentru repornire sunt suficiente ultimele două comenzi, pornind din rădăcina proiectului. Oprește backend-ul cu Ctrl+C când ai terminat.
 
-Testele Vitest verifică logica de simulare: date necunoscute/vechi, pierderea gateway-ului, limitele tarifului, plata idempotentă, ieșirea fără plată, ID-uri duplicate, capacitatea maximă, interblocări, reset în timpul execuției și injecția manuală a senzorilor independent de sesiuni. Aceste teste sunt probe software, nu dovezi pentru protocoale, OPC UA sau hardware.
+</details>
 
-Verificare locală la 9 noiembrie 2026:
+### Depanare: „Backend indisponibil (HTTP 500)”
 
-- `npm.cmd run build`: compilarea TypeScript și build-ul Vite au reușit.
-- `npm.cmd test`: 29 de teste au trecut, inclusiv acționarea manuală, comenzile pentru toți senzorii, injecția offline și protejarea sesiunilor asociate.
-- Browser: intrare → plată simulată → ieșire; căutare fără rezultate; S1 deconectat → două locuri necunoscute; G deconectat → patru locuri necunoscute; obstacol → ieșire blocată; reset confirmat; export JSON descărcat.
-- Panoul de senzori: comutare individuală, toate locurile ocupate/libere, sesiuni păstrate, vehicul fără sesiune explicat, modificare cu S1 deconectat și observație recuperată la reconectare. Comutarea din tastatură și afișarea la 390 px au fost verificate.
-- Interfața simplificată: o singură etichetă „Mod simulare”, rezumat compact inclusiv pentru date necunoscute, încasări în Sesiuni, senzori deschiși din Parcare. Panoul lateral a fost verificat cu Escape și X, revenirea focalizării la buton și închidere vizibilă după derulare pe mobil.
-- Afișare verificată la lățimi de 390 și 1440 px; pe telefon, tabelul are derulare orizontală în interiorul panoului. Pagina nu depășește lățimea ecranului în scenariile verificate.
-- Consola browserului nu a raportat erori sau avertismente în fluxurile executate.
+Această eroare poate apărea când proxy-ul frontend nu poate contacta backend-ul:
 
-OPC UA, codec-ul ASCII, jurnalizarea embedded și testele industriale din rolul Studentului 3 rămân lucrări separate. Această etapă acoperă frontend-ul și contractul său intern de integrare.
+1. Verifică dacă backend-ul rulează și răspunde la `http://127.0.0.1:8000/api/v1/health`, sau la adresa configurată în `BACKEND_URL`.
+2. Verifică adresa și portul din `.env.local`, dacă fișierul există. Repornește Vite dacă le-ai modificat.
+3. Apasă din nou **Testează conexiunea**. Mesajul afișat reprezintă rezultatul ultimului test și nu se actualizează automat.
+
+Dacă backend-ul răspunde direct, dar testul prin frontend eșuează, verifică mesajele din terminalele backend și Vite.
+
+## Testare
+
+Rulează comenzile din directorul `frontend`:
+
+| Comandă | Scop |
+| --- | --- |
+| `npm test` | Testează simulatorul și validarea răspunsului health, inclusiv erorile și timeout-ul. |
+| `npm run build` | Verifică TypeScript și generează build-ul în `dist/`. |
+| `npm run preview` | Servește local build-ul generat; folosește adresa afișată în terminal. |
+| `npm run test:backend` | Verifică prin HTTP real conexiunea frontend → backend. Necesită ambele servere pornite. |
+
+Pentru testarea unui frontend pornit pe alt port, setează `FRONTEND_URL` înainte de test. Exemplu în PowerShell, pentru `preview` pe portul 4173:
+
+```powershell
+$env:FRONTEND_URL='http://127.0.0.1:4173'
+npm.cmd run test:backend
+```
+
+Testul de conexiune eșuează dacă backend-ul este indisponibil, răspunsul nu este JSON sau nu confirmă serviciul `smart-parking-backend` în starea `healthy`.
+
+## Limitări
+
+- Locurile, nodurile, barierele, sesiunile și plățile sunt simulate local. Starea este păstrată în memoria paginii și se resetează la reîncărcare.
+- Verificarea health confirmă numai conexiunea HTTP. Backend-ul verificat nu oferă încă endpoint-uri pentru datele și comenzile parcării. Eticheta **Sistem conectat** se referă la gateway-ul simulat.
+- Poziția barierei este estimată. Datele nodurilor deconectate sau mai vechi de 2 secunde sunt afișate ca necunoscute.
+- Un build static publicat separat necesită configurarea rutei `/api` către backend în serverul de hosting; proxy-ul Vite funcționează în `dev` și `preview`.

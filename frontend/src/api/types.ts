@@ -23,6 +23,7 @@ export interface Barrier {
   nodeId: 'S3' | 'S4';
   state: 'CLOSED' | 'OPENING' | 'OPEN' | 'CLOSING' | 'FAULT';
   obstacle: boolean;
+  vehiclePresent: boolean;
   feedback: 'estimated';
 }
 
@@ -59,6 +60,7 @@ export type ParkingAction =
   | { type: 'set-all-slot-sensors'; occupied: boolean }
   | { type: 'set-node-online'; nodeId: NodeId; online: boolean }
   | { type: 'set-obstacle'; barrierId: BarrierId; active: boolean }
+  | { type: 'set-barrier-presence'; barrierId: BarrierId; present: boolean }
   | { type: 'set-transport'; transport: Transport };
 
 export interface ParkingSnapshot {

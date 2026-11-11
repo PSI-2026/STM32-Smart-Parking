@@ -1,5 +1,7 @@
 .sensor-panel { margin-top: 23px; }
 .sensor-panel-heading { flex-wrap: wrap; }
+.sensor-section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 0 21px 15px; }
+.sensor-section-heading h3 { color: var(--text); font-size: 12px; font-weight: 600; }
 .sensor-bulk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .sensor-occupy-all {
   color: var(--occupied-text);
@@ -65,12 +67,18 @@
 .sensor-switch input:checked { background: var(--occupied); border-color: var(--occupied); }
 .sensor-switch input:checked::after { left: 17px; }
 .sensor-switch input:disabled { cursor: not-allowed; opacity: .45; }
+.sensor-switch.presence input:checked { background: var(--primary); border-color: var(--primary); }
+.sensor-switch.presence .sensor-input-value.on { color: var(--primary); }
+.sensor-switch.obstacle input:checked { background: #b08b44; border-color: #b08b44; }
+.sensor-switch.obstacle .sensor-input-value.on { color: #a37122; }
+.sensor-barrier-grid .sensor-switch + .sensor-switch { margin-top: 13px; }
 .sensor-card-note { min-height: 20px; margin-top: 10px; font-size: 11px; line-height: 1.7; color: var(--muted); }
 .sensor-panel-note { display: flex; align-items: flex-start; gap: 9px; padding: 13px 21px; border-top: 1px solid var(--line); background: #f7f9fc; color: var(--muted); }
 .sensor-panel-note svg { margin-top: 2px; }
 .sensor-panel-note p { font-size: 11px; line-height: 1.8; }
 
 @media (max-width: 740px) {
+  .sensor-section-heading { padding-left: 15px; padding-right: 15px; }
   .sensor-panel { margin-top: 18px; }
   .sensor-grid { grid-template-columns: 1fr; padding: 0 15px 17px; gap: 12px; }
   .sensor-card { padding: 15px; }

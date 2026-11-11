@@ -28,6 +28,7 @@ export function Icon({ name, size = 20, style }: { name: IconName; size?: number
 export function CarTop({ occupied }: { occupied: boolean }) {
   return <svg className={`car-top ${occupied ? '' : 'car-ghost'}`} viewBox="0 0 64 112" aria-hidden="true">
     <rect x="5" y="24" width="5" height="14" rx="2" fill="#3e5149" /><rect x="54" y="24" width="5" height="14" rx="2" fill="#3e5149" />
+    <rect x="5" y="76" width="5" height="14" rx="2" fill="#3e5149" /><rect x="54" y="76" width="5" height="14" rx="2" fill="#3e5149" />
     <rect x="9" y="4" width="46" height="104" rx="17" fill="currentColor" />
     <path d="m17 25 4-8h22l4 8 1 17H16l1-17ZM16 78h32l-3 17H19l-3-17Z" fill="#e5eee9" />
     <rect x="18" y="46" width="28" height="28" rx="5" fill="#fff" opacity=".15" />
