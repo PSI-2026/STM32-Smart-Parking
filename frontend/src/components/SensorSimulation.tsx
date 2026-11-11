@@ -18,15 +18,8 @@ export function SensorSimulation({ snapshot, pending, onAction, headingId = 'sen
   return (
     <section className="panel sensor-panel" aria-labelledby={headingId}>
       <div className="panel-heading sensor-panel-heading">
-        <div>
-          <h2 id={headingId}>Simulare senzori</h2>
-          <p>Simulează ocuparea locurilor, prezența vehiculelor și obstacolele.</p>
-        </div>
-      </div>
-
-      <div className="sensor-section-heading">
-        <h3>Locuri de parcare</h3>
-        <div className="sensor-bulk-actions">
+        <h2 id={headingId}>Simulare senzori</h2>
+        <div className="sensor-bulk-actions" role="group" aria-label="Ocuparea tuturor locurilor de parcare">
           <button
             className="button secondary small"
             disabled={pending || snapshot.slots.every((slot) => !slot.occupied)}
@@ -44,7 +37,7 @@ export function SensorSimulation({ snapshot, pending, onAction, headingId = 'sen
         </div>
       </div>
 
-      <div className="sensor-grid">
+      <div className="sensor-grid sensor-slot-grid" role="group" aria-label="Senzori pentru locurile de parcare">
         {snapshot.slots.map((slot) => {
           const observed = getSlotState(snapshot, slot);
           const inputId = `slot-sensor-${slot.id}`;
@@ -77,11 +70,7 @@ export function SensorSimulation({ snapshot, pending, onAction, headingId = 'sen
                   />
                 </span>
               </label>
-              <p className="sensor-card-note">
-                {observed === 'unknown'
-                  ? 'Date indisponibile. Poziția senzorului rămâne memorată în simulator.'
-                  : 'ON = ocupat · OFF = liber'}
-              </p>
+              {observed === 'unknown' && <p className="sensor-card-note">Date indisponibile. Poziția senzorului rămâne memorată în simulator.</p>}
             </div>
           );
         })}

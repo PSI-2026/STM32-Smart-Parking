@@ -132,6 +132,13 @@ tbody tr:hover { background: #f8fafd; }
 .node-icon { background: #e7eff7; color: #6789a7; }
 .node-copy strong { color: #466782; }
 .node-copy p, .node-copy small { color: #71869b; }
+.diagnostics-panel > .panel-heading { padding: 14px 18px; }
+.diagnostics-panel > .panel-heading > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
+.diagnostics-panel > .panel-heading p { margin: 0; font-size: 11px; }
+.diagnostics-panel:not(.compact) .nodes-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0 18px 16px; }
+.diagnostics-panel:not(.compact) .node-card { gap: 8px; padding: 11px 12px; }
+.diagnostics-panel:not(.compact) .node-icon { width: 30px; height: 32px; }
+.diagnostics-panel .node-copy p, .diagnostics-panel .node-copy small { margin-top: 3px; line-height: 1.4; }
 .diagnostics-footer { color: #6d8499; background: #fbfcfe; border-color: #e4ebf2; }
 .control-label, .switch-row strong { color: #4b6c87; }
 select { border-color: #d4e1ed; background: #f5f8fc; color: #466782; }
@@ -159,8 +166,20 @@ select { border-color: #d4e1ed; background: #f5f8fc; color: #466782; }
 .dialog-note { color: #5f7c96; background: #edf3f9; }
 
 .page-heading .heading-actions { margin-top: 0; }
-.parking-panel .panel-heading { flex-wrap: wrap; row-gap: 10px; }
-.occupancy-summary, .session-summary {
+.parking-overview { margin-bottom: 23px; }
+.parking-overview-heading { flex-wrap: wrap; gap: 14px; border-bottom: 1px solid var(--line); }
+.parking-overview-body { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(290px, 1fr); gap: 24px; padding: 20px 21px; }
+.parking-overview-body > section { min-width: 0; }
+.parking-overview h3 { font-size: 13px; font-weight: 600; }
+.parking-map > h3 { margin-bottom: 14px; }
+.parking-map .parking-ground { margin: 0; }
+.parking-map .map-legend { padding: 14px 0 0; }
+.parking-overview .access-panel { border-left: 1px solid var(--line); padding-left: 24px; }
+.parking-overview .access-panel .panel-heading { padding: 0 0 14px; }
+.parking-overview .barrier-list { padding: 0; }
+.parking-overview .access-note { padding: 12px 0 0; }
+.occupancy-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 9px; font-size: 12px; }
+.session-summary {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -181,18 +200,45 @@ select { border-color: #d4e1ed; background: #f5f8fc; color: #466782; }
 .session-summary { flex-wrap: wrap; justify-content: space-between; color: var(--muted); }
 .session-summary > span { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 7px; }
 .session-summary strong { color: var(--text); font-weight: 550; }
-.sessions-panel .session-summary { margin: 0 0 16px; border: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 0; background: #f8fafd; font-size: 11px; }
+.sessions-panel .sessions-heading { flex-wrap: wrap; gap: 14px 20px; padding: 16px 21px; }
+.sessions-heading-copy { flex: 1 1 260px; min-width: 0; }
+.sessions-panel .title-inline { flex-wrap: wrap; }
+.sessions-panel .session-summary { justify-content: flex-start; gap: 6px 14px; margin: 8px 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; font-size: 11px; }
+.sessions-panel .sessions-toolbar { flex: 0 1 auto; flex-wrap: wrap; gap: 10px; padding: 0; }
+.sessions-panel .search-field { width: 210px; }
+.sessions-panel th { padding-block: 10px; }
+.sessions-panel td { padding-block: 12px; }
+.sessions-panel .table-footer { padding: 10px 21px; }
 #sessions-title { scroll-margin-top: 20px; }
 #sessions-title:focus { outline: none; }
-.system-sections { display: grid; gap: 23px; }
+.system-sections { display: grid; gap: 16px; }
 .system-sections > .sensor-panel { margin-top: 0; }
 
+@media (max-width: 1149px) {
+  .diagnostics-panel:not(.compact) .nodes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 1050px) {
+  .parking-overview-body { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .parking-overview .access-panel { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 20px; }
   .barrier-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .barrier-illustration { height: 72px; }
 }
 
+@media (max-width: 849px) {
+  .diagnostics-panel:not(.compact) .nodes-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
 @media (max-width: 740px) {
+  .diagnostics-panel > .panel-heading { padding: 14px 15px; }
+  .diagnostics-panel:not(.compact) .nodes-grid { gap: 8px; padding: 0 15px 14px; }
+  .sessions-panel .sessions-heading { flex-direction: column; align-items: stretch; padding: 15px; }
+  .sessions-heading-copy { flex: none; }
+  .sessions-panel .sessions-toolbar, .sessions-panel .search-field { width: 100%; }
+  .sessions-panel .table-footer { padding: 10px 15px; }
+  .parking-overview { margin-bottom: 18px; }
+  .parking-overview-body { padding: 16px 15px; }
+  .parking-overview-heading { align-items: flex-start; gap: 12px; }
   .barrier-list { padding: 0 13px; gap: 10px; }
   .barrier-card { min-width: 0; padding: 11px 9px; }
   .barrier-direction { font-size: 11px; gap: 4px; }
@@ -204,8 +250,8 @@ select { border-color: #d4e1ed; background: #f5f8fc; color: #466782; }
   .access-note { padding: 14px 15px; font-size: 10px; }
   .sidebar nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #sessions-title { scroll-margin-top: 140px; }
-  .system-sections { gap: 18px; }
-  .occupancy-summary { gap: 8px; padding: 13px 12px; font-size: 11px; }
+  .system-sections { gap: 14px; }
+  .occupancy-summary { gap: 8px; font-size: 11px; }
   .occupancy-value { gap: 5px; }
   .occupancy-value i { width: 5px; height: 5px; }
   .session-summary { gap: 10px; padding: 13px; font-size: 12px; }

@@ -2,21 +2,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin: 0 21px 18px;
-  padding: 14px;
+  gap: 12px;
+  margin: 0 18px 12px;
+  padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--surface-soft);
 }
-.backend-connection-copy { min-width: 0; }
+.backend-connection-copy { display: flex; align-items: center; flex-wrap: wrap; flex: 1; min-width: 0; gap: 4px 12px; }
+.backend-connection-copy > [role="status"] { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+.backend-connection-copy > small { flex-basis: 100%; }
 .backend-connection strong { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; }
-.backend-connection p { margin-top: 7px; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
-.backend-connection small { display: block; margin-top: 5px; font-size: 10px; line-height: 1.6; color: var(--muted); }
+.backend-connection p { font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.backend-connection small { display: block; font-size: 10px; line-height: 1.6; color: var(--muted); }
 .backend-connection.online p { color: #50723d; }
 .backend-connection.error p { color: var(--occupied-text); }
-@media (max-width: 1230px) { .backend-connection { margin-inline: 17px; } }
 @media (max-width: 740px) {
-  .backend-connection { margin-inline: 15px; align-items: stretch; flex-direction: column; gap: 12px; }
+  .backend-connection { margin-inline: 15px; align-items: stretch; flex-direction: column; gap: 10px; }
   .backend-connection .button { align-self: flex-start; }
 }

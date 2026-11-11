@@ -31,6 +31,8 @@ La pornire există două sesiuni fictive: **B 101 DEM** în P01, neplătită, ș
 
 Deconectarea unui nod din **Sistem** face datele lui necunoscute. Deconectarea gateway-ului G face toate locurile și barierele necunoscute. **Resetează demo** cere confirmare și reface starea inițială.
 
+**Jurnal de evenimente** permite căutarea după mesaj, nod sau vehicul, inclusiv fără diacritice, și filtrarea după nivel. Afișează inițial cele mai recente opt evenimente; **Arată mai multe** extinde lista, iar **Restrânge lista** revine la afișarea compactă. Rezultatele comenzilor se pot deschide separat. **Exportă JSON** include toate evenimentele și rezultatele comenzilor din memorie, indiferent de filtrele alese.
+
 ## Conexiune cu backend-ul
 
 În **Sistem → Starea sistemului → Backend API**, apasă **Testează conexiunea**. Verificarea rulează la cerere, are o limită de 5 secunde și afișează rezultatul, versiunea API și ora ultimului test.

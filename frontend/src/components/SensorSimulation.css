@@ -1,6 +1,6 @@
 .sensor-panel { margin-top: 23px; }
-.sensor-panel-heading { flex-wrap: wrap; }
-.sensor-section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 0 21px 15px; }
+.sensor-panel .sensor-panel-heading { flex-wrap: wrap; gap: 12px; padding: 16px 18px; }
+.sensor-section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 0 18px 10px; }
 .sensor-section-heading h3 { color: var(--text); font-size: 12px; font-weight: 600; }
 .sensor-bulk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .sensor-occupy-all {
@@ -12,32 +12,33 @@
 .sensor-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  padding: 0 21px 20px;
+  gap: 10px;
+  padding: 0 18px 14px;
 }
-.sensor-card { padding: 17px; border: 1px solid var(--line); border-radius: 7px; background: #fbfcfe; }
+.sensor-card { padding: 12px; border: 1px solid var(--line); border-radius: 7px; background: #fbfcfe; }
 .sensor-card-heading, .sensor-identity, .sensor-switch, .sensor-switch-control { display: flex; align-items: center; }
-.sensor-card-heading, .sensor-switch { justify-content: space-between; gap: 12px; }
-.sensor-identity { gap: 10px; }
+.sensor-card-heading, .sensor-switch { justify-content: space-between; gap: 8px; }
+.sensor-identity { gap: 8px; }
 .sensor-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 37px;
-  height: 37px;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
   border-radius: 7px;
   color: #6789a7;
   background: #e7eff7;
 }
-.sensor-identity strong { display: block; font-size: 13px; font-weight: 600; color: var(--text); }
-.sensor-identity small { display: block; margin-top: 4px; font-size: 11px; color: var(--muted); }
-.sensor-observation { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 5px; font-size: 11px; }
+.sensor-identity strong { display: block; font-size: 12px; font-weight: 600; color: var(--text); }
+.sensor-identity small { display: block; margin-top: 3px; font-size: 10px; color: var(--muted); }
+.sensor-observation { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 5px; font-size: 10px; }
 .sensor-observation.free { color: #52733c; background: #eaf2df; }
 .sensor-observation.occupied { color: var(--occupied-text); background: var(--occupied-surface); }
 .sensor-observation.unknown { color: var(--unknown-text); background: var(--unknown-surface); }
 .sensor-observation .status-dot { width: 5px; height: 5px; }
-.sensor-switch { margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line); font-size: 12px; color: #4b6c87; cursor: pointer; }
-.sensor-switch-control { gap: 10px; }
+.sensor-switch { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12px; color: #4b6c87; cursor: pointer; }
+.sensor-switch-control { gap: 8px; flex-shrink: 0; }
 .sensor-input-value { font-size: 10px; font-weight: 600; color: var(--subtle); min-width: 24px; }
 .sensor-input-value.on { color: var(--occupied-text); }
 .sensor-switch input {
@@ -71,19 +72,23 @@
 .sensor-switch.presence .sensor-input-value.on { color: var(--primary); }
 .sensor-switch.obstacle input:checked { background: #b08b44; border-color: #b08b44; }
 .sensor-switch.obstacle .sensor-input-value.on { color: #a37122; }
-.sensor-barrier-grid .sensor-switch + .sensor-switch { margin-top: 13px; }
-.sensor-card-note { min-height: 20px; margin-top: 10px; font-size: 11px; line-height: 1.7; color: var(--muted); }
-.sensor-panel-note { display: flex; align-items: flex-start; gap: 9px; padding: 13px 21px; border-top: 1px solid var(--line); background: #f7f9fc; color: var(--muted); }
+.sensor-barrier-grid .sensor-switch + .sensor-switch { margin-top: 8px; }
+.sensor-card-note { margin-top: 8px; font-size: 11px; line-height: 1.5; color: var(--muted); }
+.sensor-panel-note { display: flex; align-items: flex-start; gap: 8px; padding: 10px 18px; border-top: 1px solid var(--line); background: #f7f9fc; color: var(--muted); }
 .sensor-panel-note svg { margin-top: 2px; }
-.sensor-panel-note p { font-size: 11px; line-height: 1.8; }
+.sensor-panel-note p { font-size: 11px; line-height: 1.6; }
+
+@media (min-width: 1150px) {
+  .system-sections .sensor-slot-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 
 @media (max-width: 740px) {
+  .sensor-panel .sensor-panel-heading { padding: 15px 15px 12px; }
   .sensor-section-heading { padding-left: 15px; padding-right: 15px; }
   .sensor-panel { margin-top: 18px; }
-  .sensor-grid { grid-template-columns: 1fr; padding: 0 15px 17px; gap: 12px; }
-  .sensor-card { padding: 15px; }
+  .sensor-grid { grid-template-columns: 1fr; padding: 0 15px 14px; gap: 8px; }
   .sensor-bulk-actions { width: 100%; }
   .sensor-bulk-actions .button { flex: 1; }
-  .sensor-panel-note { padding: 12px 15px; }
+  .sensor-panel-note { padding: 10px 15px; }
   .sensor-switch { min-height: 45px; }
 }

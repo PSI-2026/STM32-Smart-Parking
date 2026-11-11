@@ -41,6 +41,7 @@ th { font-size: 10px; }
 .table-sub, .slot-table-label, .table-footer { font-size: 10px; }
 .table-actions .button { font-size: 11px; }
 .completed-label { font-size: 11px; }
+.node-copy > div { justify-content: flex-start; }
 .node-copy strong { font-size: 12px; }
 .node-copy p, .node-copy small { font-size: 10px; }
 .node-card { padding: 13px 11px; }

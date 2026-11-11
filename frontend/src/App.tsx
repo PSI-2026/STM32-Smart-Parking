@@ -6,6 +6,7 @@ import { EntryDialog } from './components/EntryDialog';
 import { SensorSimulation } from './components/SensorSimulation';
 import { SensorDrawer } from './components/SensorDrawer';
 import { BackendConnection } from './components/BackendConnection';
+import { Events } from './components/Events';
 import { CarTop, Icon } from './components/Icon';
 import type { IconName } from './components/Icon';
 import { useParking } from './hooks/useParking';
@@ -100,8 +101,12 @@ export function App() {
 
         {!online && <div className="connection-alert" role="alert"><Icon name="alert" size={18} />Gateway deconectat. Datele sunt necunoscute, iar comenzile de acces sunt suspendate. Reconectează G din Sistem.</div>}
 
-        {view === 'overview' && <OccupancySummary snapshot={snapshot} />}
-        {view === 'overview' && <div className="overview-grid"><ParkingMap snapshot={snapshot} sensorsOpen={sensorsOpen} onSensors={() => setSensorsOpen(true)} onSlot={(slotId) => {
+        {view === 'overview' && <section className="panel parking-overview" aria-labelledby="parking-overview-title">
+          <div className="panel-heading parking-overview-heading">
+            <div><h2 id="parking-overview-title">Situația parcării</h2><OccupancySummary snapshot={snapshot} /></div>
+            <button className="button secondary small" aria-expanded={sensorsOpen} aria-controls="sensor-drawer" onClick={() => setSensorsOpen(true)}><Icon name="chip" size={16} />Simulare senzori</button>
+          </div>
+          <div className="parking-overview-body"><ParkingMap snapshot={snapshot} onSlot={(slotId) => {
           const slot = snapshot.slots.find((item) => item.id === slotId)!;
           const state = getSlotState(snapshot, slot);
           const session = snapshot.sessions.find((item) => item.id === slot.sessionId && item.status !== 'completed');
@@ -114,7 +119,8 @@ export function App() {
             setNotice({ message: `P0${slot.id} · vehicul detectat de senzor, fără sesiune asociată.`, error: false });
           } else if (state === 'free' && canEnter) setEntryOpen(true);
           else setNotice({ message: state === 'unknown' ? 'Date indisponibile pentru acest loc. Verifică stația din Sistem.' : 'Intrarea nu este disponibilă momentan. Verifică bariera și comunicația.', error: true });
-        }} /><AccessPanel snapshot={snapshot} /></div>}
+          }} /><AccessPanel snapshot={snapshot} /></div>
+        </section>}
 
         {view === 'overview' && <SessionsPanel snapshot={snapshot} pending={pending} search={search} setSearch={setSearch} filter={filter} setFilter={setFilter} send={send} />}
         {view === 'system' && <div className="system-sections">
@@ -156,10 +162,10 @@ function SessionSummary({ snapshot }: { snapshot: ParkingSnapshot }) {
   </section>;
 }
 
-function ParkingMap({ snapshot, onSlot, sensorsOpen, onSensors }: {
-  snapshot: ParkingSnapshot; onSlot: (id: number) => void; sensorsOpen: boolean; onSensors: () => void;
+function ParkingMap({ snapshot, onSlot }: {
+  snapshot: ParkingSnapshot; onSlot: (id: number) => void;
 }) {
-  return <section className="panel parking-panel" aria-labelledby="parking-title"><div className="panel-heading"><h2 id="parking-title">Locuri de parcare</h2><button className="button secondary small" aria-expanded={sensorsOpen} aria-controls="sensor-drawer" onClick={onSensors}><Icon name="chip" size={16} />Simulare senzori</button></div>
+  return <section className="parking-map" aria-labelledby="parking-title"><h3 id="parking-title">Locuri de parcare</h3>
     <div className="parking-ground">
       <div className="map-plan">
         <div className="parking-row">
@@ -185,8 +191,8 @@ function Slot({ slotId, snapshot, onClick }: { slotId: number; snapshot: Parking
 const barrierLabels = { CLOSED: 'Închisă', OPENING: 'Se deschide', OPEN: 'Deschisă', CLOSING: 'Se închide', FAULT: 'Interblocare', UNKNOWN: 'Necunoscută' };
 function AccessPanel({ snapshot }: { snapshot: ParkingSnapshot }) {
   return (
-    <section className="panel access-panel" aria-labelledby="access-title">
-      <div className="panel-heading"><div><h2 id="access-title">Control acces</h2><p>Intrare și ieșire din parcare</p></div><Icon name="signal" size={20} /></div>
+    <section className="access-panel" aria-labelledby="access-title">
+      <div className="panel-heading"><div><h3 id="access-title">Control acces</h3><p>Intrare și ieșire din parcare</p></div><Icon name="signal" size={20} /></div>
       <div className="barrier-list" aria-live="polite">
         {snapshot.barriers.map((barrier) => {
           const state = getBarrierState(snapshot, barrier);
@@ -225,7 +231,18 @@ function SessionsPanel({ snapshot, search, setSearch, filter, setFilter, pending
     const barrier = snapshot.barriers.find((item) => item.id === 'exit')!;
     return !pending && session.status === 'paid' && isNodeAvailable(snapshot, 'S4') && barrier.state === 'CLOSED' && !barrier.obstacle && getOccupancy(snapshot).unknown === 0;
   };
-  return <section className="panel sessions-panel" aria-labelledby="sessions-title"><div className="panel-heading"><div className="title-inline"><h2 id="sessions-title" tabIndex={-1}>Sesiuni de parcare</h2><span className="number-pill">{snapshot.sessions.filter((session) => session.status !== 'completed').length} active</span></div></div><SessionSummary snapshot={snapshot} /><div className="sessions-toolbar"><div className="segmented-control" aria-label="Filtrare sesiuni"><button aria-pressed={filter === 'active'} className={filter === 'active' ? 'selected' : ''} onClick={() => setFilter('active')}>În parcare</button><button aria-pressed={filter === 'all'} className={filter === 'all' ? 'selected' : ''} onClick={() => setFilter('all')}>Toate sesiunile</button></div><label className="search-field"><Icon name="search" size={17} /><input aria-label="Caută număr de înmatriculare" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Caută un număr…" />{search && <button className="icon-button" aria-label="Șterge căutarea" onClick={() => setSearch('')}><Icon name="close" size={14} /></button>}</label></div><div className="table-scroll"><table><thead><tr><th>VEHICUL</th><th>LOC</th><th>INTRARE / DURATĂ</th><th>TAXĂ SIMULATĂ</th><th>STARE</th><th className="actions-heading">ACȚIUNE</th></tr></thead><tbody>{sessions.map((session) => <tr key={session.id}><td><span className="plate"><span className="plate-eu">RO</span>{session.plate}</span></td><td><span className="slot-table-label">P0{session.slotId}</span></td><td><div className="table-main">{time(session.enteredAt)}</div><div className="table-sub">{duration(session.enteredAt, session.exitedAt ?? snapshot.updatedAt)}</div></td><td><span className="table-main amount">{money(session.amountDueBani)}</span><div className="table-sub">{money(session.hourlyRateBani)} / oră începută</div></td><td><Badge tone={session.status === 'paid' ? 'green' : session.status === 'active' ? 'amber' : 'neutral'}>{session.status === 'paid' ? 'Plătit · demo' : session.status === 'active' ? 'Neplătit' : 'Încheiată'}</Badge></td><td className="table-actions">{session.status === 'active' ? <button className="button small secondary" disabled={pending || !isNodeAvailable(snapshot, 'G')} onClick={() => void send({ type: 'pay', sessionId: session.id })} aria-label={`Simulează plata pentru ${session.plate}`}><Icon name="wallet" size={15} />Plată demo</button> : session.status === 'paid' ? <button className="button small exit-button" disabled={!canExit(session)} onClick={() => void send({ type: 'exit', sessionId: session.id })} aria-label={`Autorizează ieșirea pentru ${session.plate}`}>Autorizează ieșirea<Icon name="arrow" size={15} /></button> : <span className="completed-label"><Icon name="check" size={16} />{time(session.exitedAt!)}</span>}</td></tr>)}</tbody></table>{sessions.length === 0 && <div className="empty-state"><Icon name="car" size={28} /><strong>{search ? 'Niciun vehicul găsit' : 'Nicio sesiune activă'}</strong><p>{search ? 'Încearcă alt număr sau afișează toate sesiunile.' : 'Următoarea intrare va apărea aici.'}</p></div>}</div><div className="table-footer"><Icon name="info" size={14} />Tariful este calculat de simulator. Plata și autorizarea ieșirii sunt operații distincte.</div></section>;
+  return <section className="panel sessions-panel" aria-labelledby="sessions-title">
+    <div className="panel-heading sessions-heading">
+      <div className="sessions-heading-copy">
+        <div className="title-inline"><h2 id="sessions-title" tabIndex={-1}>Sesiuni de parcare</h2><span className="number-pill">{snapshot.sessions.filter((session) => session.status !== 'completed').length} active</span></div>
+        <SessionSummary snapshot={snapshot} />
+      </div>
+      <div className="sessions-toolbar">
+        <div className="segmented-control" aria-label="Filtrare sesiuni"><button aria-pressed={filter === 'active'} className={filter === 'active' ? 'selected' : ''} onClick={() => setFilter('active')}>În parcare</button><button aria-pressed={filter === 'all'} className={filter === 'all' ? 'selected' : ''} onClick={() => setFilter('all')}>Toate sesiunile</button></div>
+        <label className="search-field"><Icon name="search" size={17} /><input aria-label="Caută număr de înmatriculare" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Caută un număr…" />{search && <button className="icon-button" aria-label="Șterge căutarea" onClick={() => setSearch('')}><Icon name="close" size={14} /></button>}</label>
+      </div>
+    </div>
+    <div className="table-scroll"><table><thead><tr><th>VEHICUL</th><th>LOC</th><th>INTRARE / DURATĂ</th><th>TAXĂ SIMULATĂ</th><th>STARE</th><th className="actions-heading">ACȚIUNE</th></tr></thead><tbody>{sessions.map((session) => <tr key={session.id}><td><span className="plate"><span className="plate-eu">RO</span>{session.plate}</span></td><td><span className="slot-table-label">P0{session.slotId}</span></td><td><div className="table-main">{time(session.enteredAt)}</div><div className="table-sub">{duration(session.enteredAt, session.exitedAt ?? snapshot.updatedAt)}</div></td><td><span className="table-main amount">{money(session.amountDueBani)}</span><div className="table-sub">{money(session.hourlyRateBani)} / oră începută</div></td><td><Badge tone={session.status === 'paid' ? 'green' : session.status === 'active' ? 'amber' : 'neutral'}>{session.status === 'paid' ? 'Plătit · demo' : session.status === 'active' ? 'Neplătit' : 'Încheiată'}</Badge></td><td className="table-actions">{session.status === 'active' ? <button className="button small secondary" disabled={pending || !isNodeAvailable(snapshot, 'G')} onClick={() => void send({ type: 'pay', sessionId: session.id })} aria-label={`Simulează plata pentru ${session.plate}`}><Icon name="wallet" size={15} />Plată demo</button> : session.status === 'paid' ? <button className="button small exit-button" disabled={!canExit(session)} onClick={() => void send({ type: 'exit', sessionId: session.id })} aria-label={`Autorizează ieșirea pentru ${session.plate}`}>Autorizează ieșirea<Icon name="arrow" size={15} /></button> : <span className="completed-label"><Icon name="check" size={16} />{time(session.exitedAt!)}</span>}</td></tr>)}</tbody></table>{sessions.length === 0 && <div className="empty-state"><Icon name="car" size={28} /><strong>{search ? 'Niciun vehicul găsit' : 'Nicio sesiune activă'}</strong><p>{search ? 'Încearcă alt număr sau afișează toate sesiunile.' : 'Următoarea intrare va apărea aici.'}</p></div>}</div><div className="table-footer"><Icon name="info" size={14} />Tariful este calculat de simulator. Plata și autorizarea ieșirii sunt operații distincte.</div></section>;
 }
 
 function Diagnostics({ snapshot, send, pending }: { snapshot: ParkingSnapshot; send: Send; pending: boolean }) {
@@ -252,27 +269,6 @@ function Diagnostics({ snapshot, send, pending }: { snapshot: ParkingSnapshot; s
           );
         })}
       </div>
-    </section>
-  );
-}
-
-function Events({ snapshot, onExport }: { snapshot: ParkingSnapshot; onExport: () => void }) {
-  return (
-    <section className="panel events-panel" aria-labelledby="events-title">
-      <div className="panel-heading">
-        <div><h2 id="events-title">Jurnal de evenimente</h2><p>{snapshot.events.length} evenimente · ultimele 100 sunt păstrate în memorie</p></div>
-        <button className="button secondary small" onClick={onExport}><Icon name="download" size={15} />Exportă JSON</button>
-      </div>
-      <ol className="event-list">
-        {snapshot.events.slice(0, 100).map((event) => (
-          <li key={event.id}>
-            <span className={`event-icon ${event.level}`}><Icon name={event.level === 'warning' ? 'alert' : event.level === 'success' ? 'check' : 'arrow'} size={14} /></span>
-            <div><p>{event.message}</p><small>{new Date(event.at).toLocaleDateString('ro-RO', { day: '2-digit', month: 'short' })} · {time(event.at)}</small></div>
-            <time dateTime={new Date(event.at).toISOString()}>{time(event.at)}</time>
-          </li>
-        ))}
-      </ol>
-      {snapshot.commands.length > 0 && <div className="command-history"><h3>Rezultate comenzi</h3>{snapshot.commands.map((item) => <div key={item.commandId}><code>{item.commandId.slice(0, 8)}</code><Badge tone={item.status === 'done' ? 'green' : 'amber'}>{item.status}</Badge><p>{item.message}</p></div>)}</div>}
     </section>
   );
 }
