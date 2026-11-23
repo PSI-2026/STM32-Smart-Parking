@@ -189,6 +189,9 @@ size_t ModbusSlave_Process(ModbusSlave *s, const uint8_t *req, size_t length,
     }
     if (fn == 6U) {
         if (length != 8U) return exception(res, s->node_id, fn, 3U);
+        /* A successful write echoes eight bytes. Do not execute a command
+         * whose acknowledgement cannot fit in the caller's buffer. */
+        if (capacity < 8U) return 0U;
         uint16_t address = be16(req + 2U), value = be16(req + 4U);
         if (address < 0x0100U || address > 0x0105U)
             return exception(res, s->node_id, fn, 2U);

@@ -34,3 +34,22 @@ Tipuri eveniment: 1 cerere deschidere, 2 deschisă, 3 trecere, 4 închisă, 5 in
 Exemplu: masterul scrie 0x0100 = 41, 0x0102 = 0x000A (P02 și P04 ocupate), apoi 0x0103 = 0x000E (P02–P04 cunoscute). Dacă P01 este liber, 0x0004 = 0x000A, 0x0005 = 0x000F și 0x0006 = 2. Actualizarea expiră după 5 s. Pentru intrare, masterul scrie 0x0100 = 42 și 0x0101 = 1, apoi urmărește 0x000C și evenimentele 3/5. Repetarea comenzii cu secvența 42 nu pornește alt ciclu.
 
 Pentru fiecare actualizare simulată, masterul scrie mai întâi o secvență nouă la 0x0100, apoi 0x0102 și 0x0103. Repetarea aceleiași secvențe nu reîmprospătează temporizatorul; secvențele vechi sunt respinse. Perechea de scrieri a simulării nu este atomică la nivel de cadru; registrul 0x0103 este punctul de aplicare. Masterul trebuie să serializeze cererile pentru fiecare nod. Versiunile viitoare pot adăuga registre fără a schimba adresele de mai sus.
+
+## Delimitarea cadrelor la 115200 baud
+
+Receptorul foloseste contorul Cortex-M4 DWT, initializat la frecventa
+`SystemCoreClock`, pentru pragurile de 750 us intre caractere si 1750 us intre
+cadre recomandate pentru viteze peste 19200 baud in
+[MODBUS Serial Line Guide v1.02](https://www.modbus.org/file/secure/modbusoverserial.pdf).
+Frontierele dintre cadre sunt memorate in callback-ul UART, chiar daca bucla
+principala este ocupata cu transmiterea unui raspuns. Sunt pastrate cel mult
+patru cadre complete si cadrul curent; saturarea cozii elimina cadre intregi.
+Cadrele cu pauze interne prea mari, erori UART sau peste 256 de octeti sunt
+abandonate pana la urmatoarea pauza completa intre cadre. Consumatorul copiaza
+un singur cadru cu intreruperile suspendate si restaureaza starea lor anterioara.
+Aceste praguri sunt pentru configuratia actuala de 115200 baud; o configuratie
+mai lenta necesita recalcularea timpilor in caractere. Masuratorile pe placa
+raman necesare pentru validarea latentei ISR si a contorului DWT.
+
+Functia 06 necesita un buffer de raspuns de minimum 8 octeti. Daca acesta este
+mai mic, comanda nu este aplicata si API-ul returneaza zero octeti.

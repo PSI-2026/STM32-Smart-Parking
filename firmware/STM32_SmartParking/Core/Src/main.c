@@ -24,8 +24,8 @@
 #include "hybrid_parking.h"
 #include "shared_gate.h"
 #include "modbus_slave.h"
+#include "modbus_rtu_rx.h"
 #include "buzzer.h"
-#include <string.h>
 #ifndef PARKING_NODE_ID
 #define PARKING_NODE_ID 1U
 #endif
@@ -58,11 +58,8 @@ static SharedGate gate;
 static ModbusSlave modbus;
 static Buzzer buzzer;
 static uint8_t rx_byte;
-static uint8_t rx_frame[MODBUS_MAX_ADU];
+static ModbusRtuRx rtu_rx;
 static uint8_t tx_frame[MODBUS_MAX_ADU];
-static volatile uint16_t rx_length;
-static volatile uint32_t last_byte_ms;
-static volatile bool rx_overflow;
 static volatile bool tx_busy;
 static uint16_t last_buzzer_sequence;
 /* USER CODE END PV */
@@ -82,9 +79,7 @@ static void MX_USART1_UART_Init(void);
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart != &huart1) return;
-    if (rx_length < MODBUS_MAX_ADU) rx_frame[rx_length++] = rx_byte;
-    else rx_overflow = true;
-    last_byte_ms = HAL_GetTick();
+    ModbusRtuRx_Push(&rtu_rx, rx_byte, DWT->CYCCNT);
     (void)HAL_UART_Receive_IT(&huart1, &rx_byte, 1U);
 }
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
@@ -94,8 +89,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     if (huart == &huart1) {
-        rx_length = 0U;
-        rx_overflow = false;
+        ModbusRtuRx_Abort(&rtu_rx, DWT->CYCCNT);
         (void)HAL_UART_Receive_IT(&huart1, &rx_byte, 1U);
     }
 }
@@ -139,6 +133,12 @@ int main(void)
   ModbusSlave_Init(&modbus, PARKING_NODE_ID, &parking,
                    PARKING_NODE_ID == 1U ? &gate : NULL);
   Buzzer_Init(&buzzer, false);
+  /* Cortex-M4 cycle counter gives sub-microsecond RTU gap measurements.
+   * The 1 ms HAL tick cannot distinguish valid 1.75 ms inter-frame gaps. */
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0U;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+  ModbusRtuRx_Init(&rtu_rx, SystemCoreClock);
   (void)HAL_UART_Receive_IT(&huart1, &rx_byte, 1U);
 /* USER CODE END 2 */
 
@@ -172,19 +172,15 @@ int main(void)
         parking.state[0] == SPACE_OCCUPIED ? GPIO_PIN_SET : GPIO_PIN_RESET);
     HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin,
         gate.state == GATE_CLOSED ? GPIO_PIN_RESET : GPIO_PIN_SET);
-    /* 3.5 character times at 115200 baud is below 1 ms; 2 ms is conservative. */
-    if (!tx_busy && rx_length > 0U && (uint32_t)(now - last_byte_ms) >= 2U) {
+    if (!tx_busy) {
         uint8_t request[MODBUS_MAX_ADU];
-        uint16_t length;
-        bool overflow;
+        uint32_t primask = __get_PRIMASK();
         __disable_irq();
-        length = rx_length;
-        overflow = rx_overflow;
-        if (!overflow) memcpy(request, rx_frame, length);
-        rx_length = 0U;
-        rx_overflow = false;
-        __enable_irq();
-        if (!overflow) {
+        /* Read the timestamp inside the same critical section as the frame:
+         * an ISR must not make last_tick newer than the consumer's timestamp. */
+        size_t length = ModbusRtuRx_Pop(&rtu_rx, request, sizeof request, DWT->CYCCNT);
+        __set_PRIMASK(primask);
+        if (length > 0U) {
             size_t reply = ModbusSlave_Process(&modbus, request, length,
                 tx_frame, sizeof tx_frame, now);
             if (reply > 0U) {
