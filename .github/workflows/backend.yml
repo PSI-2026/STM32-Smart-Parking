@@ -37,6 +37,8 @@ jobs:
         run: uv run --project backend --locked python -B -m unittest discover -s backend/tests
       - name: Exported contracts are current
         run: uv run --project backend --locked python -B backend/scripts/export_contracts.py --check
+      - name: Reproducible HTTP handoff scenarios
+        run: uv run --project backend --locked python -B backend/scripts/verify_handoff.py
 
   frontend-integration:
     runs-on: ubuntu-latest

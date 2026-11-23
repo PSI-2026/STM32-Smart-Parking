@@ -1,0 +1,72 @@
+{
+  "passed": true,
+  "python": "3.12.13",
+  "platform": "Windows",
+  "duration_seconds": 9.75,
+  "mode": "simulation",
+  "physical_hardware_validated": false,
+  "scenarios": [
+    {
+      "scenario": "authentication-before-admission",
+      "passed": true,
+      "anonymous": 401,
+      "viewer_write": 403,
+      "command_absent": true
+    },
+    {
+      "scenario": "entry-payment-exit-and-replay",
+      "passed": true,
+      "unpaid_exit": "rejected",
+      "payment_replay": 200,
+      "repeated_payment_bani": 500,
+      "final_capacity": 4
+    },
+    {
+      "scenario": "simultaneous-entries",
+      "passed": true,
+      "results": [
+        "done",
+        "rejected"
+      ],
+      "oversubscribed": false
+    },
+    {
+      "scenario": "full-parking",
+      "passed": true,
+      "available": 0,
+      "admission_result": "PARKING_FULL"
+    },
+    {
+      "scenario": "unavailable-node-and-gateway",
+      "passed": true,
+      "missing_data": "null/UNKNOWN",
+      "capacity_unknown": true
+    },
+    {
+      "scenario": "restart-preserves-session-payment-and-replay",
+      "passed": true,
+      "session_status": "paid",
+      "paid_bani": 500
+    },
+    {
+      "scenario": "client-timeout-and-restart-without-resend",
+      "passed": true,
+      "after_restart": "unknown",
+      "held_claims": 1,
+      "same_command_id": true,
+      "fabricated_passage": false
+    }
+  ],
+  "verified_at_utc": "2026-11-23T17:29:31.175325+00:00",
+  "main_revision": "0f27144c91770fe6b2a740afb237ac14333eb528",
+  "candidate_script_sha256": "75ca654ad3b48c9a9115d51eeb72533b9daedc5453894858f3b0b544281e07ff",
+  "clean_install": true,
+  "source": "git archive origin/main plus the proposed verify_handoff.py",
+  "python_tests": 128,
+  "frontend_tests": 53,
+  "browser_tests": 3,
+  "contracts_current": true,
+  "frontend_build": true,
+  "node_version": "v24.14.0",
+  "uv_version": "uv 0.11.28 (ebf0f43d7 2026-07-07 x86_64-pc-windows-msvc)"
+}
