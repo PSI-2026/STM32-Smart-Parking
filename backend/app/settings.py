@@ -3,12 +3,12 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="PARKING_", env_file=None, extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="PARKING_", env_file=None, extra="ignore", hide_input_in_errors=True)
 
     database_path: Path = Path(__file__).resolve().parents[1] / "data" / "parking.sqlite3"
     mode: Literal["simulation", "hardware"] = "simulation"
@@ -26,3 +26,19 @@ class Settings(BaseSettings):
     modbus_baudrate: int = Field(default=19200, ge=1200, le=115200)
     modbus_parity: Literal["N", "E", "O"] = "N"
     modbus_timeout_seconds: float = Field(default=0.3, ge=0.05, le=2)
+    viewer_token: SecretStr | None = None
+    operator_token: SecretStr | None = None
+    admin_token: SecretStr | None = None
+    allow_anonymous_simulation: bool = False
+
+    @model_validator(mode="after")
+    def validate_access(self):
+        tokens = [value.get_secret_value() for value in
+                  (self.viewer_token, self.operator_token, self.admin_token) if value is not None]
+        if any(len(token) < 32 or any(c.isspace() for c in token) for token in tokens):
+            raise ValueError("Access tokens require at least 32 non-whitespace characters")
+        if len(tokens) != len(set(tokens)):
+            raise ValueError("Access tokens must be distinct across roles")
+        if self.mode == "hardware" and self.allow_anonymous_simulation:
+            raise ValueError("Anonymous access is never allowed in hardware mode")
+        return self

@@ -1,5 +1,12 @@
 # Contracte de integrare — API v1.0.0 / MODBUS țintă v2.1
 
+API-ul protejează toate operațiile în afară de health cu ParkingBearer.
+Citirile cer viewer/operator/admin; enter/pay/exit cer operator sau admin,
+iar acțiunile demo cer admin și sunt executabile doar în simulation.
+401 UNAUTHORIZED și 403 FORBIDDEN sunt refuzuri înainte de admitere;
+același ID nu este rezervat. Vezi [SECURITY.md](../SECURITY.md) pentru
+configurare și profilul explicit de dezvoltare locală.
+
 Rutele HTTP v1 sunt implementate în pasul 4, iar simulatorul persistent
 în pasul 5. Integrarea transporturilor urmează. Nici firmware-ul actual, nici vechea hartă locală v2.0 nu oferă
 încă extensia v2.1 descrisă aici. Lipsa ei blochează scrierile hardware;

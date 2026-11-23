@@ -358,7 +358,7 @@ class SimulatorTests(unittest.TestCase):
 class SimulatorHttpTests(unittest.TestCase):
     def test_real_worker_completes_api_flow_without_injected_telemetry_or_proofs(self):
         with tempfile.TemporaryDirectory() as directory:
-            settings = Settings(database_path=Path(directory) / "http.sqlite3", simulator_step_delay_ms=50,
+            settings = Settings(allow_anonymous_simulation=True, database_path=Path(directory) / "http.sqlite3", simulator_step_delay_ms=50,
                                 worker_interval_seconds=0.05)
             with TestClient(create_app(settings)) as client:
                 def execute(identifier, action):

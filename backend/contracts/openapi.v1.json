@@ -63,8 +63,23 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "ParkingBearer": []
+          }
+        ]
       }
     },
     "/api/v1/commands": {
@@ -122,6 +137,16 @@
               }
             }
           },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "200": {
             "description": "Previously stored command (idempotent replay)",
             "content": {
@@ -131,8 +156,23 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Role cannot perform this action; command ID not reserved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
+        "security": [
+          {
+            "ParkingBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -199,6 +239,16 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -213,6 +263,11 @@
               "title": "Commandid",
               "type": "string"
             }
+          }
+        ],
+        "security": [
+          {
+            "ParkingBearer": []
           }
         ]
       }
@@ -261,6 +316,16 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -282,6 +347,11 @@
               "minLength": 1,
               "maxLength": 512
             }
+          }
+        ],
+        "security": [
+          {
+            "ParkingBearer": []
           }
         ]
       }
@@ -340,6 +410,16 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -354,6 +434,11 @@
               "title": "Id",
               "type": "string"
             }
+          }
+        ],
+        "security": [
+          {
+            "ParkingBearer": []
           }
         ]
       }
@@ -402,6 +487,16 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -423,6 +518,11 @@
               "minLength": 1,
               "maxLength": 512
             }
+          }
+        ],
+        "security": [
+          {
+            "ParkingBearer": []
           }
         ]
       }
@@ -1023,7 +1123,9 @@
               "DEVICE_TIMEOUT",
               "COMMAND_FAILED",
               "SERVICE_UNAVAILABLE",
-              "INTERNAL_ERROR"
+              "INTERNAL_ERROR",
+              "UNAUTHORIZED",
+              "FORBIDDEN"
             ],
             "title": "Code",
             "type": "string"
@@ -2097,6 +2199,12 @@
         ],
         "title": "Station",
         "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "ParkingBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }

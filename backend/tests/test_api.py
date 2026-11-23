@@ -30,7 +30,7 @@ class ApiTests(unittest.TestCase):
         self.path = Path(self.directory.name) / "parking.sqlite3"
         self.service = ParkingService(Database(self.path), clock_ms=lambda: 1_800_000_000_000,
                                       monotonic_ms=lambda: 1000)
-        self.settings = Settings(database_path=self.path, worker_enabled=False, simulator_enabled=False)
+        self.settings = Settings(allow_anonymous_simulation=True, database_path=self.path, worker_enabled=False, simulator_enabled=False)
         self.app = create_app(self.settings, service=self.service)
         self.client = self.enterContext(TestClient(self.app, raise_server_exceptions=False))
 
@@ -62,6 +62,25 @@ class ApiTests(unittest.TestCase):
         spec = self.client.get("/openapi.json").json()
         self.assertEqual(len(spec["paths"]), 7)
         self.assertEqual(spec["paths"]["/api/v1/commands"]["post"]["operationId"], "submitCommand")
+
+    def test_controllers_resolve_service_and_configuration_per_application(self):
+        other_settings = Settings(allow_anonymous_simulation=True, database_path=Path(self.directory.name) / "other.sqlite3",
+            transport="USB", hourly_rate_bani=700, worker_enabled=False, simulator_enabled=False)
+        with TestClient(create_app(other_settings)) as other:
+            self.assertEqual(self.client.get("/api/v1/snapshot").json()["transport"], "TCP")
+            snapshot = other.get("/api/v1/snapshot").json()
+            self.assertEqual(snapshot["transport"], "USB")
+            self.assertEqual(snapshot["hourlyRateBani"], 700)
+            body = {"commandId": "isolated", "action": {"type": "pay", "sessionId": "missing"}}
+            self.assertEqual(other.post("/api/v1/commands", json=body).status_code, 202)
+            self.assertEqual(self.client.get("/api/v1/commands/isolated").status_code, 404)
+            self.assertEqual(self.client.post("/api/v1/commands", json=body).status_code, 202)
+
+    def test_legacy_service_import_is_the_same_class_and_exception(self):
+        from app import parking as legacy
+        from app.services import parking as current
+        self.assertIs(legacy.ParkingService, current.ParkingService)
+        self.assertIs(legacy.BusinessFault, current.BusinessFault)
 
     def test_admission_replay_conflict_and_persistent_refusal(self):
         body = {"commandId": "entry-1", "action": {"type": "enter", "plate": "b 101 dem"}}
@@ -165,7 +184,7 @@ class ApiTests(unittest.TestCase):
 
     def test_internal_and_database_errors_do_not_expose_details(self):
         with patch.object(self.service, "snapshot", side_effect=RuntimeError("PRIVATE_SECRET")):
-            with self.assertLogs("app.main", level="ERROR"):
+            with self.assertLogs("app.controllers.errors", level="ERROR"):
                 response = self.client.get("/api/v1/snapshot")
             self.assertEqual(response.status_code, 500)
             self.assertEqual(response.json()["error"]["code"], "INTERNAL_ERROR")

@@ -45,6 +45,9 @@ def artifacts() -> dict[str, dict]:
         }
         if parameters:
             result["parameters"] = parameters
+        if operation_id != "healthCheck":
+            result["security"] = [{"ParkingBearer": []}]
+            result["responses"]["401"] = response("ApiError", "Missing or invalid credentials")
         return result
 
     command_id = [{"name": "commandId", "in": "path", "required": True,
@@ -65,6 +68,7 @@ def artifacts() -> dict[str, dict]:
     submit["requestBody"] = {"required": True, "content": {"application/json": {
         "schema": {"$ref": "#/components/schemas/CommandRequest"}}}}
     submit["responses"]["200"] = response("CommandResult", "Previously stored command (idempotent replay)")
+    submit["responses"]["403"] = response("ApiError", "Role cannot perform this action; command ID not reserved")
     spec = {
         "openapi": "3.1.0", "info": {"title": "Smart Parking target API", "version": "1.0.0",
             "description": "HTTP API with persistent simulator. Physical device I/O is integrated separately."},
@@ -78,7 +82,8 @@ def artifacts() -> dict[str, dict]:
             "/api/v1/sessions/{sessionId}": {"get": operation("getSession", "ParkingSession", parameters=session_id, errors=(missing, invalid, internal, unavailable))},
             "/api/v1/events": {"get": operation("listEvents", "EventPage", parameters=pagination, errors=(invalid, internal, unavailable))},
         },
-        "components": {"schemas": components},
+        "components": {"schemas": components, "securitySchemes": {
+            "ParkingBearer": {"type": "http", "scheme": "bearer"}}},
     }
     enter = CommandRequest.model_validate({"commandId": "demo-entry-001", "action": {"type": "enter", "plate": "B 101 DEM"}})
     unknown = ParkingSnapshot.model_validate({

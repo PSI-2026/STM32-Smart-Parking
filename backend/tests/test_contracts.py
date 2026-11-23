@@ -186,7 +186,7 @@ class ContractTests(unittest.TestCase):
                                reconciliation_required=True)
 
     def test_existing_health_and_runtime_spec_remain_compatible(self):
-        with tempfile.TemporaryDirectory() as directory, TestClient(create_app(Settings(
+        with tempfile.TemporaryDirectory() as directory, TestClient(create_app(Settings(allow_anonymous_simulation=True,
             database_path=Path(directory) / "parking.sqlite3", worker_enabled=False, simulator_enabled=False))) as client:
             response = client.get("/api/v1/health")
             self.assertEqual(response.status_code, 200)
@@ -265,7 +265,7 @@ class ContractTests(unittest.TestCase):
         openapi = artifacts["openapi.v1.json"]
         self.assertEqual(set(openapi["paths"]["/api/v1/health"]["get"]["responses"]), {"200"})
         self.assertEqual(set(openapi["paths"]["/api/v1/commands"]["post"]["responses"]),
-                         {"200", "202", "409", "422", "503", "500"})
+                         {"200", "202", "401", "403", "409", "422", "503", "500"})
         cases = artifacts["examples/reconciliation.json"]["scenarios"]
         by_name = {case["name"]: case for case in cases}
         self.assertEqual(by_name["B-refused-after-A"]["adapterResult"]["status"], "rejected")

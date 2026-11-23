@@ -1,9 +1,16 @@
 # Persistență și reguli de business — pasul 3
 
-Implementarea este în `app/storage.py`, `app/telemetry.py` și `app/parking.py`. Ea poate fi
+Implementarea este în `app/storage.py`, `app/telemetry.py` și `app/services/parking.py`. Ea poate fi
 testată independent de HTTP și hardware. Rutele și worker-ul sunt conectate
 în pasul 4, descris în [API.md](API.md); simulatorul este conectat în pasul 5,
 transporturile în pasul 6. Nu există I/O MODBUS în tranzacții.
+
+Controller-ele din `app/controllers/parking.py` validează cererile HTTP și
+apelează serviciul; `app/controllers/errors.py` transformă excepțiile în
+răspunsuri API. Serviciul nu importă FastAPI și nu decide coduri HTTP.
+`app/main.py` configurează componentele și ciclul de viață. Importurile
+anterioare din `app.parking` rămân disponibile ca aliasuri către aceleași
+clase, fără o a doua instanță sau implementare a regulilor de business.
 
 ## Inițializare
 

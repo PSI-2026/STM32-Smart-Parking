@@ -63,3 +63,30 @@ Necesar pentru integrare: actualizarea tipurilor UI, adaptarea afișării
 necunoscut/pending, folosirea capacității cu rezervări și înlocuirea mock-ului
 prin adaptor HTTP. Nici TypeScript structural compatibility, nici
 compatibilitatea binară integrală cu demo-ul nu sunt revendicate.
+
+## Implementarea adaptorului HTTP
+
+Checkout-ul include acum sursa frontend de la revizia de mai sus și
+adaptările descrise în tabel. Instanța implicită ParkingApi este HTTP;
+mock-ul este păstrat pentru teste. Metodele interfeței rămân aceleași,
+iar reset aruncă explicit o eroare și este dezactivat în UI.
+
+Tokenul este introdus la rulare, trimis ca Bearer și ținut doar în memorie.
+Răspunsurile sunt validate folosind contracts/openapi.v1.json. Tipurile UI
+permit câteva câmpuri opționale pentru mock; acest lucru nu relaxează
+validarea JSON a adaptorului HTTP.
+
+Cache-ul inițial este necunoscut, modul poate fi necunoscut până la prima
+citire, iar validitatea este evaluată cu ageMs și timp monoton, nu prin
+compararea ceasului browserului cu cel al backendului. Cererile de polling
+nu se suprapun. execute urmărește accepted/executing până la rezultat sau
+deadline. Un rezultat incert păstrează ID-ul și acțiunea în sessionStorage;
+UI permite reluarea aceleiași cereri, fără generarea unui ID nou.
+
+Controalele demo sunt dezactivate/ascunse în hardware. Sesiunile pending,
+locurile neatribuite și valorile null sunt afișate explicit. Snapshot-ul
+conține doar sesiunile neînchise și evenimente/comenzi recente; dashboard-ul
+nu pretinde că a încărcat istoricul complet.
+
+Verificarea E2E este în frontend/e2e, cu browser, Vite și FastAPI reale,
+pe baze SQLite temporare. Aceasta este distinctă de validarea STM32/serial.

@@ -21,6 +21,15 @@ niciun fișier `.env`, inclusiv cel local rămas din pregătirea Node.js.
 | PARKING_SIMULATOR_ENABLED | true | Simulator activ numai în modul simulation; false păstrează API-ul fără adaptor. |
 | PARKING_SIMULATOR_STEP_DELAY_MS | 200 | 50–10000 ms pe etapă de barieră virtuală. |
 | PARKING_SIMULATOR_AUTO_PASSAGE | true | Evenimente automate explicite; false este util pentru teste de așteptare. |
+| PARKING_VIEWER_TOKEN | neconfigurat | Bearer pentru citire. |
+| PARKING_OPERATOR_TOKEN | neconfigurat | Citire și enter/pay/exit. |
+| PARKING_ADMIN_TOKEN | neconfigurat | Include comenzile demo, numai în simulation. |
+| PARKING_ALLOW_ANONYMOUS_SIMULATION | false | Profil explicit local de dezvoltare; interzis în hardware. |
+
+Health este public. Celelalte rute cer Bearer conform [SECURITY.md](SECURITY.md).
+Fără credențiale configurate, accesul este închis (503); lipsa/un token greșit
+produce 401, iar un rol insuficient produce 403. Refuzurile de acces nu
+persistă o comandă și nu rezervă ID-ul. OpenAPI declară security și erorile.
 
 Se rulează un singur proces Uvicorn, fără `--workers` multiplu.
 Factory-ul `create_app(settings, service=...)` permite teste cu baze

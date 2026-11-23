@@ -10,7 +10,7 @@ from pydantic import Field, model_validator
 
 from .contracts.api import BarrierId, DEVICE_SCHEMA_VERSION, NodeId, WireModel
 from .contracts.firmware import DeviceCommand, DeviceCommandResult, DeviceTelemetry, PassageEvidence
-from .parking import BusinessFault
+from .services.parking import BusinessFault
 from .worker import process_batch
 
 NODES = {"G": "gateway", "S1": "slots", "S2": "slots", "S3": "entry", "S4": "exit", "S5": "environment"}

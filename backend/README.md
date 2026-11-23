@@ -54,27 +54,34 @@ Endpoint-ul health confirmă numai funcționarea serviciului HTTP. Nu verifică
 STM32, MODBUS sau o bază de date. Pornirea nu necesită hardware, frontend,
 Node.js ori un fișier `.env`.
 
-## Integrare frontend
+## Acces și integrare frontend
 
-Compatibilitatea contractului a fost verificată prin inspecția branch-ului
-`feature/frontend-dashboard`, la commit-ul
-`5972a3e4beeeaaf52c062f684cc55d5074d20165`:
+API-ul este protejat implicit. Health rămâne public; pentru snapshot,
+sesiuni, evenimente și comenzi configurați credențialele din
+[SECURITY.md](SECURITY.md). Nu există token implicit. Fără configurare,
+rutele protejate răspund 503; autentificarea greșită primește 401, iar
+rolul insuficient 403. Profilul anonim de dezvoltare trebuie activat
+explicit și nu este permis în hardware.
 
-- [frontend/vite.config.ts](https://github.com/PSI-2026/STM32-Smart-Parking/blob/5972a3e4beeeaaf52c062f684cc55d5074d20165/frontend/vite.config.ts)
-  transmite `/api` către `BACKEND_URL`, implicit `http://127.0.0.1:8000`.
-- [frontend/src/api/backendHealth.ts](https://github.com/PSI-2026/STM32-Smart-Parking/blob/5972a3e4beeeaaf52c062f684cc55d5074d20165/frontend/src/api/backendHealth.ts)
-  apelează `/api/v1/health` și cere `status: "healthy"`,
-  `service: "smart-parking-backend"` și o versiune text nevidă.
-- [frontend/scripts/test-backend.mjs](https://github.com/PSI-2026/STM32-Smart-Parking/blob/5972a3e4beeeaaf52c062f684cc55d5074d20165/frontend/scripts/test-backend.mjs)
-  verifică acest contract prin HTTP, prin proxy-ul frontend.
+Frontend-ul este inclus în checkout și folosește adaptorul HTTP ParkingApi,
+cu polling, validare după schema OpenAPI și token introdus la rulare.
+[Instrucțiuni frontend](../frontend/README.md). Testele Playwright pornesc
+frontend și backend reale pe baze temporare, verifică fluxul de parcare,
+modul hardware fără dispozitive și un răspuns pierdut la comandă.
 
-Răspunsul backend-ului respectă aceste cerințe. Codul frontend nu este inclus
-în checkout-ul acestui branch; verificarea contractului prin inspecție nu
-înlocuiește rularea testului de integrare cu ambele servere pornite.
+[ARCHITECTURE.md](ARCHITECTURE.md) descrie controller-ele, serviciile,
+repository-ul și tranzacțiile. [PR9_REMEDIATION.md](PR9_REMEDIATION.md)
+mapează remedierea feedbackului de review. Workflow-ul Backend CI rulează
+testele Python și verificarea contractelor, plus build/teste/E2E frontend.
+Existența workflow-ului nu înseamnă că a rulat deja pe GitHub.
 
 ## Fișiere și stadiu
 
-- `app/main.py`: aplicația FastAPI, lifespan și rutele API v1.
+- `app/main.py`: configurarea aplicației FastAPI, lifespan și pornirea worker-elor.
+- `app/controllers/`: rutele HTTP API v1, dependența către serviciu și tratarea erorilor HTTP.
+- `app/services/`: fațada aplicației, servicii specializate și politica de tarifare, independente de FastAPI.
+- `app/repositories/`: operațiile SQLite ale serviciilor, fără commit-uri proprii.
+- `app/parking.py`: importuri de compatibilitate către serviciu; nu dublează implementarea.
 - `pyproject.toml`: versiunea Python acceptată și dependențele directe.
 - `uv.lock`: versiunile rezolvate ale dependențelor; se păstrează în Git.
 - [contracts/README.md](contracts/README.md): contractele țintă API și MODBUS,
