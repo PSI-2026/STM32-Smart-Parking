@@ -1,129 +1,160 @@
 # STM32 Smart Parking
 
-Sistem inteligent de parcare bazat pe STM32F429 si protocolul MODBUS RTU.
+**Sistem de parcare inteligentă cu firmware STM32F429, comunicație MODBUS RTU și componente software pentru monitorizare și simulare.**
 
-**Disciplina:** Proiectarea Sistemelor Inglobate  
-**Organizatie:** PSI-2026  
-**Platforme:** macOS si Windows  
-**Stadiu:** In dezvoltare
-**Echipa:** 3 studenti
+**Disciplina:** Proiectarea Sistemelor Înglobate  
+**Organizație:** PSI-2026  
+**Echipă:** 3 studenți  
+**Stadiu:** prototip firmware testat automat; integrarea completă este în dezvoltare  
+**Platforme de dezvoltare:** macOS și Windows
 
-## 1. Descriere
+> **Important:** Funcțiile software și testele native nu reprezintă validare pe placa fizică. Actuatoarele barierei și ieșirea fizică pentru buzzer sunt dezactivate în configurația actuală. Plățile sunt exclusiv simulate.
 
-Proiectul urmareste implementarea si simularea unui sistem de parcare cu patru locuri monitorizate individual, doua bariere automate si un sistem de gestionare a platilor.
+## Despre proiect
 
-Microcontrolerul STM32F429 va gestiona senzorii si dispozitivele de control, comunicand cu aplicatia PC prin MODBUS RTU.
+Proiectul urmărește gestionarea unei parcări cu **patru locuri logice**, controlul accesului, evidența sesiunilor și calcularea costurilor, cu o interfață web și un backend care vor comunica ulterior cu microcontrolerul.
 
-## 2. Functionalitati propuse
+În versiunea de firmware integrată în `main`:
 
-- Detectarea ocuparii a patru locuri de parcare.
-- Semnalizare cu LED rosu si verde pentru fiecare loc.
-- Controlul a doua bariere prin servomotoare.
-- Monitorizarea numerelor de inmatriculare.
-- Calculul duratei si taxei de parcare.
-- Simularea confirmarii platii.
-- Comunicatie MODBUS RTU Master-Slave.
-- Inregistrarea evenimentelor sistemului.
-- Interfata grafica pentru monitorizare si control.
+- **P01** este reprezentat, pentru testele de laborator, de butonul **USER (PA0)** al plăcii STM32; acesta nu este un senzor de parcare instalat.
+- **P02–P04** sunt locuri simulate, pentru care firmware-ul poate primi stări prin registre MODBUS. Integrarea efectivă cu backend-ul nu este încă realizată.
+- O **singură barieră logică partajată** gestionează cererile de intrare și ieșire. Două bariere fizice separate fac parte din arhitectura țintă, nu din implementarea actuală.
+- Starea necunoscută sau expirată a locurilor nu este considerată „liber”; intrarea este blocată când capacitatea nu poate fi verificată.
 
-## 3. Tehnologii
+## Stadiul implementării
 
-| Componenta | Tehnologie |
+| Componentă | Stadiu | Detalii |
+| --- | --- | --- |
+| Firmware STM32F429 | **Implementat în `main`** | Parcare hibridă, barieră logică, buzzer neblocant, evenimente și tratarea erorilor |
+| MODBUS RTU Slave v1.0 | **Implementat în `main`** | USART1, 115200 8N1, funcțiile **03** și **06**, verificare CRC, delimitare RTU cu DWT |
+| Teste firmware | **Automatizate în `main`** | Șase executabile de test native, AddressSanitizer, UndefinedBehaviorSanitizer, `clang-tidy` |
+| Backend FastAPI + SQLite | **În Pull Request #9** | API de parcare, sesiuni, plăți simulate, simulator persistent; nu este încă în `main` |
+| Frontend React + TypeScript | **În branch separat** | `feature/frontend-dashboard`; nu este încă în `main` |
+| Integrare hardware MODBUS | **Nevalidată** | Transportul fizic și compatibilitatea cu protocolul țintă necesită dezvoltare și testare |
+| Bariere și buzzer fizice | **Dezactivate** | Nu se activează până la verificarea senzorilor, interblocărilor și circuitelor |
+
+Codul backend propus se află în [PR #9 — FastAPI backend și simulator](https://github.com/PSI-2026/STM32-Smart-Parking/pull/9), iar interfața web se dezvoltă în [branch-ul frontend](https://github.com/PSI-2026/STM32-Smart-Parking/tree/feature/frontend-dashboard). Aceste componente **nu trebuie confundate cu fișierele disponibile în `main`**, unde directoarele `backend/` și `frontend/` sunt momentan rezervate.
+
+## Arhitectură
+
+### Firmware implementat
+
+```mermaid
+flowchart LR
+    UART[USART1 / MODBUS RTU v1.0] --> MCU[STM32F429]
+    USER[Buton USER PA0 / P01] --> MCU
+    MCU --> SP[Patru locuri logice]
+    MCU --> G[Barieră logică partajată]
+    MCU --> LED[LED-uri LD3 și LD4]
+    MCU --> EV[Evenimente și stare de eroare]
+```
+
+Firmware-ul rulează implicit în `GATE_SIMULATION`; **nu acționează fizic o barieră**. Stările P02–P04 pot fi actualizate prin protocol, dar nu există încă o integrare hardware–backend demonstrată.
+
+### Arhitectura software vizată
+
+```mermaid
+flowchart TD
+    UI[Dashboard React - în dezvoltare] --> API[Backend FastAPI / SQLite - PR #9]
+    API --> SIM[Simulator persistent]
+    API -. integrare viitoare .-> BUS[Transport MODBUS RTU v2.1]
+    BUS -. neimplementat în firmware v1.0 .-> NODES[Gateway și noduri STM32]
+```
+
+**Atenție la compatibilitate:** firmware-ul integrat utilizează **MODBUS v1.0 (FC03/FC06)** și o singură poartă logică. Contractul backend propune **MODBUS distribuit v2.1**, cu identitate pentru gateway și nodurile S1–S5, observații atomice **FC04** și comenzi **FC16**. Cele două profiluri **nu sunt compatibile direct**. Nu trebuie trimise comenzi hardware v2.1 către firmware-ul actual și nu trebuie activat un fallback implicit la v1.0.
+
+Citiți [matricea de compatibilitate firmware–backend](docs/firmware/COMPATIBILITATE_BACKEND.md) înainte de implementarea transportului fizic.
+
+## Tehnologii
+
+| Domeniu | Tehnologii |
 | --- | --- |
-| Microcontroler | STM32F429, ARM Cortex-M4 |
-| Firmware | C, STM32 HAL |
-| IDE | STM32CubeIDE |
-| Simulare | Renode |
-| Comunicare | MODBUS RTU |
-| Backend | Node.js, TypeScript |
-| Frontend | React, TypeScript, Vite |
-| Versionare | Git si GitHub |
+| Hardware / firmware | STM32F429, ARM Cortex-M4, C11, STM32 HAL, STM32CubeMX / STM32CubeIDE |
+| Protocol implementat | MODBUS RTU Slave v1.0 prin USART1 |
+| Testare firmware | Teste native C, ASan, UBSan, `clang-tidy`, GitHub Actions |
+| Backend în dezvoltare | Python, FastAPI, SQLite, simulator persistent (PR #9) |
+| Frontend în dezvoltare | React, TypeScript, Vite (branch separat) |
+| Simulare și depanare | Renode, GDB; ghidul existent descrie un scenariu mai vechi pentru PARK1 |
+| Colaborare | Git, GitHub, Pull Requests |
 
-## 4. Structura proiectului
+## Structura repository-ului
 
-- `firmware/` - codul sursa STM32 si configuratia perifericelor.
-- `simulation/renode/` - configuratii si scenarii de simulare.
-- `backend/` - MODBUS Master, sesiuni si plati.
-- `frontend/` - interfata grafica a parcarii.
-- `docs/` - documentatie tehnica.
-- `.github/workflows/` - automatizarea testelor si build-urilor.
+```text
+STM32-Smart-Parking/
+├── firmware/
+│   ├── STM32_SmartParking/  # Proiect STM32CubeIDE, Core, HAL, App și .ioc
+│   └── tests/               # Teste native și analiză statică
+├── backend/                 # Rezervat în main; implementarea este în PR #9
+├── frontend/                # Rezervat în main; implementarea este într-un branch
+├── simulation/renode/       # Rezervat pentru scenarii Renode
+├── docs/
+│   ├── firmware/            # Arhitectură, registre, pinout, teste și validare
+│   └── RENODE_SETUP_AND_TESTING.md
+└── .github/workflows/       # CI pentru firmware
+```
 
-## 5. Arhitectura
+## Pornire și testare
 
-Frontend React
-    |
-    v
-Backend Node.js (MODBUS Master)
-    |
-    v
-Comunicatie MODBUS RTU prin UART simulat
-    |
-    v
-Renode + STM32F429 (MODBUS Slave)
-    |
-    v
-Senzori, LED-uri si bariere virtuale
+### 1. Clonarea proiectului
 
-## 6. Organizarea echipei
+```bash
+git clone https://github.com/PSI-2026/STM32-Smart-Parking.git
+cd STM32-Smart-Parking
+```
 
-Proiectul este dezvoltat de o echipa formata din **3 studenti**, cu responsabilitati distribuite pe trei domenii principale.
+### 2. Testele native pentru firmware
 
-### Embedded Systems & Firmware
+Sunt necesare un compilator C11, `make` și `clang-tidy`. Pentru testele cu sanitizatoare este necesar și un compilator cu suport ASan/UBSan.
 
-- Configurarea microcontrolerului STM32F429.
-- Implementarea firmware-ului in limbajul C.
-- Gestionarea senzorilor, LED-urilor si servomotoarelor.
-- Implementarea protocolului MODBUS RTU Slave.
-- Simularea si depanarea firmware-ului folosind Renode si GDB.
+```bash
+make -C firmware/tests test      # Teste unitare native
+make -C firmware/tests sanitize  # AddressSanitizer + UndefinedBehaviorSanitizer
+make -C firmware/tests analyze   # Analiză statică clang-tidy
+make -C firmware/tests check     # Toate verificările de mai sus
+```
 
-### Backend & Communication
+Fluxul [GitHub Actions](.github/workflows/firmware-native-tests.yml) execută aceste verificări la Pull Requests către `main`. **Aceste teste nu verifică UART-ul sau senzorii pe placa fizică.**
 
-- Dezvoltarea serverului Node.js si TypeScript.
-- Implementarea comunicatiei MODBUS RTU Master.
-- Gestionarea sesiunilor de parcare si a vehiculelor.
-- Calcularea duratei si a taxelor de parcare.
-- Implementarea sistemului de plata simulata si a jurnalizarii evenimentelor.
+### 3. Deschiderea proiectului STM32
 
-### Frontend & Dashboard
+În **STM32CubeIDE**, importați proiectul existent din:
 
-- Dezvoltarea interfetei web folosind React si TypeScript.
-- Realizarea reprezentarii grafice a parcarii.
-- Afisarea starii locurilor de parcare in timp real.
-- Dezvoltarea interfetei pentru vehicule, bariere si plati.
-- Integrarea interfetei cu API-ul backend.
+```text
+firmware/STM32_SmartParking/
+```
 
-### Responsabilitati comune
+Verificați includerea tuturor surselor noi din `App/Src` în configurațiile **Debug** și **Release**. Cross-build-urile ARM efectuate în cadrul reviziilor anterioare nu înlocuiesc un build curat gestionat de STM32CubeIDE. Nu considerați dispozitivul validat înainte de testele de pe placă.
 
-Toti membrii echipei participa la integrarea componentelor, testare, documentatie, code review si solutionarea problemelor tehnice.
+Ghidul [Renode și GDB](docs/RENODE_SETUP_AND_TESTING.md) documentează o etapă istorică de testare PARK1; **nu reprezintă o demonstrație completă a arhitecturii hibride actuale**.
 
-## 7. Dezvoltare colaborativa
+## Documentație tehnică
 
-Repository-ul este organizat pentru dezvoltare pe macOS si Windows.
+- [Arhitectura firmware](docs/firmware/ARCHITECTURA.md)
+- [Harta registrelor MODBUS v1.0](docs/firmware/MODBUS_REGISTER_MAP.md)
+- [Compatibilitate firmware v1.0 / backend v2.1](docs/firmware/COMPATIBILITATE_BACKEND.md)
+- [Pini și conexiuni hardware](docs/firmware/PINOUT.md)
+- [Mașinile de stări](docs/firmware/STATE_MACHINES.md)
+- [Testare firmware](docs/firmware/TESTARE.md)
+- [Validare pe placa fizică — checklist](docs/firmware/VALIDARE_HARDWARE.md)
 
-Reguli generale:
+## Pașii următori
 
-1. Fiecare functionalitate se dezvolta intr-un branch separat.
-2. Modificarile se integreaza prin Pull Request.
-3. Nu se includ fisiere generate de compilare.
-4. Configuratiile comune sunt versionate in Git.
-5. Codul nou trebuie testat inainte de integrare.
+- [x] Structura proiectului și firmware de bază.
+- [x] Parcare hibridă, barieră logică partajată și MODBUS RTU v1.0.
+- [x] Teste native, sanitizatoare și analiză statică integrate în CI.
+- [x] Documentarea diferențelor dintre firmware v1.0 și contractul backend v2.1.
+- [ ] Integrarea în `main` a backend-ului și a frontend-ului după review și teste.
+- [ ] Definirea și implementarea compatibilității firmware–backend pentru profilul MODBUS distribuit v2.1.
+- [ ] Validarea pe hardware a comunicației USART, a temporizării și a recuperării după erori.
+- [ ] Validarea senzorilor, a siguranței și a controlului fizic al barierelor.
+- [ ] Teste end-to-end pentru dashboard, backend, transport și dispozitive.
 
-## 8. Etape de dezvoltare
+## Colaborare
 
-- [ ] Configurarea mediului de dezvoltare.
-- [ ] Implementarea senzorilor si LED-urilor.
-- [ ] Implementarea controlului barierelor.
-- [ ] Implementarea MODBUS RTU.
-- [ ] Integrarea simulatorului Renode.
-- [ ] Dezvoltarea backend-ului.
-- [ ] Dezvoltarea interfetei grafice.
-- [ ] Implementarea sistemului de plata simulata.
-- [ ] Testare si documentatie finala.
+Proiectul este dezvoltat de o echipă de trei studenți, cu activități în firmware, backend/comunicație și frontend. Modificările se pregătesc în branch-uri separate și se integrează prin Pull Requests, după review și verificările relevante.
 
-## 9. Observatii
+Nu includeți în commit fișierele compilate, directoarele `Debug`/`Release`, mediile virtuale, datele locale sau setările CubeIDE specifice fiecărui calculator.
 
-Plata va fi simulata, fara tranzactii bancare reale.
+---
 
-Recunoasterea automata a numerelor de inmatriculare prin camera reprezinta o extensie optionala.
-
-Proiectul va urmari cerintele disciplinei privind comunicatia MODBUS, achizitia de date, controlul si jurnalizarea.
+**Notă:** Nu sunt efectuate plăți bancare reale. Recunoașterea automată a numerelor de înmatriculare este o posibilă extindere, nu o funcție implementată.
