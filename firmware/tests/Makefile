@@ -14,14 +14,14 @@ test sanitize:
 	$(CC) $(STRICT) $(CFLAGS) $$flags $(INCLUDES) test_parking_spot.c $(APP)/Src/parking_spot.c $(COMMON) -o "$$out/spot"; "$$out/spot"; \
 	$(CC) $(STRICT) $(CFLAGS) $$flags $(INCLUDES) test_parking_manager.c $(APP)/Src/parking_manager.c $(APP)/Src/parking_spot.c $(COMMON) -o "$$out/manager"; "$$out/manager"; \
 	$(CC) $(STRICT) $(CFLAGS) $$flags $(INCLUDES) test_barrier_controller.c $(APP)/Src/barrier_controller.c -o "$$out/barrier_regression"; "$$out/barrier_regression"; \
-	$(CC) $(STRICT) $(CFLAGS) $$flags $(INCLUDES) test_barrier_safety.c $(APP)/Src/barrier_controller.c -o "$$out/barrier_safety"; "$$out/barrier_safety"
+	$(CC) $(STRICT) $(CFLAGS) $$flags $(INCLUDES) test_barrier_safety.c $(APP)/Src/barrier_controller.c -o "$$out/barrier_safety"; "$$out/barrier_safety"; \
+	$(CC) $(STRICT) $(CFLAGS) $$flags $(INCLUDES) test_hybrid.c $(APP)/Src/hybrid_parking.c $(APP)/Src/shared_gate.c $(APP)/Src/buzzer.c $(APP)/Src/modbus_slave.c $(APP)/Src/modbus_rtu_rx.c -o "$$out/hybrid"; "$$out/hybrid"
 
 analyze:
 	@set -eu; tidy=$$(command -v clang-tidy || true); \
 	if [ -z "$$tidy" ] && command -v brew >/dev/null 2>&1; then tidy="$$(brew --prefix llvm 2>/dev/null)/bin/clang-tidy"; fi; \
 	if [ ! -x "$$tidy" ]; then echo 'clang-tidy is unavailable' >&2; exit 1; fi; \
-	for source in $(APP)/Src/vehicle_detector.c $(APP)/Src/parking_spot.c $(APP)/Src/parking_manager.c $(APP)/Src/barrier_controller.c; do \
-	  set --; \
+	for source in $(APP)/Src/vehicle_detector.c $(APP)/Src/parking_spot.c $(APP)/Src/parking_manager.c $(APP)/Src/barrier_controller.c $(APP)/Src/hybrid_parking.c $(APP)/Src/shared_gate.c $(APP)/Src/buzzer.c $(APP)/Src/modbus_slave.c $(APP)/Src/modbus_rtu_rx.c; do \
 	  "$$tidy" "$$source" -quiet -checks='-*,clang-analyzer-*,bugprone-*' \
 	    --warnings-as-errors='*' --header-filter='.*' \
 	    --exclude-header-filter='(^|/)Core/Inc/main\.h$$' -- $(STRICT) $(INCLUDES); \
