@@ -1,7 +1,8 @@
 # Backend STM32 Smart Parking
 
-Backend Python + FastAPI. Baza curentă oferă verificarea HTTP a serviciului;
-sesiunile, plățile și comunicația cu STM32 vor fi implementate în etapele următoare.
+Backend Python + FastAPI. Serverul oferă momentan verificarea HTTP a
+serviciului. Persistența SQLite și logica sesiunilor/plăților sunt
+implementate separat; conectarea rutelor și comunicația STM32 urmează.
 
 ## Cerințe
 
@@ -79,6 +80,8 @@ Răspunsul backend-ului respectă aceste cerințe. Codul frontend nu este inclus
   diferențele față de frontend-ul demo și comenzile de generare/verificare.
 - `app/contracts/`: modele validate; `contracts/openapi.v1.json` descrie
   rutele planificate, nu rute deja implementate în server.
+- [BUSINESS.md](BUSINESS.md): serviciul tranzacțional din pasul 3,
+  recuperarea după restart și limitele de integrare cu simulatorul/hardware-ul.
 
 Fișierele locale `package.json`, `package-lock.json` și `tsconfig.json`
 provin din pregătirea anterioară Node.js și nu sunt folosite de acest backend.
