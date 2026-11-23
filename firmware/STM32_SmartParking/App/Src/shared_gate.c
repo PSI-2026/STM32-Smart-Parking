@@ -23,6 +23,7 @@ void SharedGate_Init(SharedGate *g, GateMode mode)
     emit(g, EVENT_RESTART);
 }
 
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): public command API order. */
 RequestResult SharedGate_Request(SharedGate *g, GateDirection dir,
                                  uint16_t sequence, bool known,
                                  uint8_t free_count, uint32_t now)
@@ -52,6 +53,7 @@ RequestResult SharedGate_Request(SharedGate *g, GateDirection dir,
     emit(g, EVENT_OPENED);
     return REQUEST_ACCEPTED;
 }
+/* NOLINTEND(bugprone-easily-swappable-parameters) */
 
 void SharedGate_Update(SharedGate *g, bool obstruction, bool sensor_valid,
                        bool simulated_input, uint32_t now)

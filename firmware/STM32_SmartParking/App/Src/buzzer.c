@@ -8,6 +8,7 @@ void Buzzer_Init(Buzzer *b, bool enabled)
     *b = (Buzzer){0};
     b->enabled = enabled;
 }
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): event tuple has fixed API. */
 void Buzzer_OnEvent(Buzzer *b, GateEvent event, uint16_t sequence, uint32_t now)
 {
     if (b == NULL || !b->enabled || sequence == b->last_event_sequence) return;
@@ -21,6 +22,7 @@ void Buzzer_OnEvent(Buzzer *b, GateEvent event, uint16_t sequence, uint32_t now)
     b->output = true;
     b->phase_started_ms = now;
 }
+/* NOLINTEND(bugprone-easily-swappable-parameters) */
 void Buzzer_Tick(Buzzer *b, uint32_t now)
 {
     if (b == NULL || !b->enabled || b->remaining == 0U) return;

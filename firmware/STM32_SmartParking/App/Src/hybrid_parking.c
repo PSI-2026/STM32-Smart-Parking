@@ -18,6 +18,8 @@ void HybridParking_SetPhysical(HybridParking *p, bool occupied)
         p->state[0] = occupied ? SPACE_OCCUPIED : SPACE_FREE;
 }
 
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): API groups masks then tick. */
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): mask inputs precede tick. */
 bool HybridParking_SetSimulation(HybridParking *p, uint8_t occupied,
                                  uint8_t known, uint32_t now)
 {
@@ -35,6 +37,8 @@ bool HybridParking_SetSimulation(HybridParking *p, uint8_t occupied,
     p->sim_valid = true;
     return true;
 }
+/* NOLINTEND(bugprone-easily-swappable-parameters) */
+/* NOLINTEND(bugprone-easily-swappable-parameters) */
 
 void HybridParking_Tick(HybridParking *p, uint32_t now)
 {

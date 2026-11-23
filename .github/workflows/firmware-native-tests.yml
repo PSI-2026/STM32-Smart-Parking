@@ -14,7 +14,7 @@ jobs:
         run: make -C firmware/tests test
       - name: Run address and undefined behavior sanitizers
         run: make -C firmware/tests sanitize
-      - name: Install static analysis tool
+      - name: Install clang-tidy
         run: brew install llvm
-      - name: Analyze firmware modules
+      - name: Enforce firmware static analysis
         run: make -C firmware/tests analyze

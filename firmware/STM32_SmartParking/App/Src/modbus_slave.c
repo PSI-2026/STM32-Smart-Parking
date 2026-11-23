@@ -32,6 +32,8 @@ static size_t finish(uint8_t *response, size_t length)
     response[length + 1U] = (uint8_t)(crc >> 8U);
     return length + 2U;
 }
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): RTU exception fields. */
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): RTU exception fields. */
 static size_t exception(uint8_t *response, uint8_t id, uint8_t function,
                         uint8_t code)
 {
@@ -40,6 +42,8 @@ static size_t exception(uint8_t *response, uint8_t id, uint8_t function,
     response[2] = code;
     return finish(response, 3U);
 }
+/* NOLINTEND(bugprone-easily-swappable-parameters) */
+/* NOLINTEND(bugprone-easily-swappable-parameters) */
 
 void ModbusSlave_Init(ModbusSlave *s, uint8_t id, HybridParking *p, SharedGate *g)
 {
@@ -99,6 +103,8 @@ static bool read_register(const ModbusSlave *s, uint16_t address, uint16_t *valu
     }
 }
 
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): register address/value pair. */
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): register address/value pair. */
 static bool write_register(ModbusSlave *s, uint16_t address, uint16_t value,
                            uint32_t now)
 {
@@ -145,7 +151,11 @@ static bool write_register(ModbusSlave *s, uint16_t address, uint16_t value,
     default: return false;
     }
 }
+/* NOLINTEND(bugprone-easily-swappable-parameters) */
+/* NOLINTEND(bugprone-easily-swappable-parameters) */
 
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): bounded request/response API. */
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): bounded RTU frame API. */
 size_t ModbusSlave_Process(ModbusSlave *s, const uint8_t *req, size_t length,
                            uint8_t *res, size_t capacity, uint32_t now)
 {
@@ -189,3 +199,5 @@ size_t ModbusSlave_Process(ModbusSlave *s, const uint8_t *req, size_t length,
     }
     return exception(res, s->node_id, fn, 1U);
 }
+/* NOLINTEND(bugprone-easily-swappable-parameters) */
+/* NOLINTEND(bugprone-easily-swappable-parameters) */

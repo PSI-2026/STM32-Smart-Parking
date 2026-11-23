@@ -1,6 +1,7 @@
 #include "vehicle_detector.h"
 #include <stddef.h>
 
+/* NOLINTBEGIN(bugprone-easily-swappable-parameters): public API kept stable. */
 void VehicleDetector_Init(
     VehicleDetector *detector,
     GPIO_TypeDef *port,
@@ -14,6 +15,7 @@ void VehicleDetector_Init(
     detector->detected = false;
     detector->fault_reported = false;
 }
+/* NOLINTEND(bugprone-easily-swappable-parameters) */
 
 void VehicleDetector_Update(VehicleDetector *detector)
 {
