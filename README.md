@@ -41,12 +41,12 @@ Codul backend propus se află în [PR #9 — FastAPI backend și simulator](http
 
 ```mermaid
 flowchart LR
-    UART[USART1 / MODBUS RTU v1.0] --> MCU[STM32F429]
-    USER[Buton USER PA0 / P01] --> MCU
-    MCU --> SP[Patru locuri logice]
-    MCU --> G[Barieră logică partajată]
-    MCU --> LED[LED-uri LD3 și LD4]
-    MCU --> EV[Evenimente și stare de eroare]
+    UART["USART1 / MODBUS RTU v1.0"] --> MCU["STM32F429"]
+    USER["Buton USER PA0 / P01"] --> MCU
+    MCU --> SP["Patru locuri logice"]
+    MCU --> G["Barieră logică partajată"]
+    MCU --> LED["LED-uri LD3 și LD4"]
+    MCU --> EV["Evenimente și stare de eroare"]
 ```
 
 Firmware-ul rulează implicit în `GATE_SIMULATION`; **nu acționează fizic o barieră**. Stările P02–P04 pot fi actualizate prin protocol, dar nu există încă o integrare hardware–backend demonstrată.
@@ -55,10 +55,10 @@ Firmware-ul rulează implicit în `GATE_SIMULATION`; **nu acționează fizic o b
 
 ```mermaid
 flowchart TD
-    UI[Dashboard React - în dezvoltare] --> API[Backend FastAPI / SQLite - PR #9]
-    API --> SIM[Simulator persistent]
-    API -. integrare viitoare .-> BUS[Transport MODBUS RTU v2.1]
-    BUS -. neimplementat în firmware v1.0 .-> NODES[Gateway și noduri STM32]
+    UI["Dashboard React - în dezvoltare"] --> API["Backend FastAPI / SQLite - PR #9"]
+    API --> SIM["Simulator persistent"]
+    API -.->|Integrare viitoare| BUS["Transport MODBUS RTU v2.1"]
+    BUS -.->|Neimplementat| NODES["Gateway și noduri STM32"]
 ```
 
 **Atenție la compatibilitate:** firmware-ul integrat utilizează **MODBUS v1.0 (FC03/FC06)** și o singură poartă logică. Contractul backend propune **MODBUS distribuit v2.1**, cu identitate pentru gateway și nodurile S1–S5, observații atomice **FC04** și comenzi **FC16**. Cele două profiluri **nu sunt compatibile direct**. Nu trebuie trimise comenzi hardware v2.1 către firmware-ul actual și nu trebuie activat un fallback implicit la v1.0.
