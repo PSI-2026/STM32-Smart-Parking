@@ -21,9 +21,14 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "parking_manager.h"
-#include "barrier_controller.h"
-#include "vehicle_detector.h"
+#include "hybrid_parking.h"
+#include "shared_gate.h"
+#include "modbus_slave.h"
+#include "buzzer.h"
+#include <string.h>
+#ifndef PARKING_NODE_ID
+#define PARKING_NODE_ID 1U
+#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,24 +53,18 @@ TIM_HandleTypeDef htim4;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-volatile uint8_t parking_occupancy_status = 0U;  // Variable to store the parking occupancy status
-volatile uint8_t entrance_request_pending = 0U;
-volatile uint8_t exit_request_pending = 0U;
-
-ParkingManager parking_manager;
-
-BarrierController entrance_barrier;
-BarrierController exit_barrier;
-
-VehicleDetector entrance_detector;
-VehicleDetector exit_detector;
-
-bool previous_entrance_detected = false;
-bool previous_exit_detected = false;
-
-VehicleDetector entrance_passage_detector;
-VehicleDetector exit_passage_detector;
-
+static HybridParking parking;
+static SharedGate gate;
+static ModbusSlave modbus;
+static Buzzer buzzer;
+static uint8_t rx_byte;
+static uint8_t rx_frame[MODBUS_MAX_ADU];
+static uint8_t tx_frame[MODBUS_MAX_ADU];
+static volatile uint16_t rx_length;
+static volatile uint32_t last_byte_ms;
+static volatile bool rx_overflow;
+static volatile bool tx_busy;
+static uint16_t last_buzzer_sequence;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -80,7 +79,26 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart != &huart1) return;
+    if (rx_length < MODBUS_MAX_ADU) rx_frame[rx_length++] = rx_byte;
+    else rx_overflow = true;
+    last_byte_ms = HAL_GetTick();
+    (void)HAL_UART_Receive_IT(&huart1, &rx_byte, 1U);
+}
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == &huart1) tx_busy = false;
+}
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == &huart1) {
+        rx_length = 0U;
+        rx_overflow = false;
+        (void)HAL_UART_Receive_IT(&huart1, &rx_byte, 1U);
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -116,39 +134,13 @@ int main(void)
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  ParkingManager_Init(&parking_manager);
-
-  BarrierController_Init(&entrance_barrier);
-  BarrierController_Init(&exit_barrier);
-
-  VehicleDetector_Init(
-      &entrance_detector,
-      ENTRANCE_SENSOR_GPIO_Port,
-      ENTRANCE_SENSOR_Pin,
-      GPIO_PIN_RESET
-  );
-
-  VehicleDetector_Init(
-      &exit_detector,
-      EXIT_SENSOR_GPIO_Port,
-      EXIT_SENSOR_Pin,
-      GPIO_PIN_RESET
-  );
-
-  VehicleDetector_Init(
-      &entrance_passage_detector,
-      ENTRANCE_PASSAGE_SENSOR_GPIO_Port,
-      ENTRANCE_PASSAGE_SENSOR_Pin,
-      GPIO_PIN_RESET
-  );
-
-  VehicleDetector_Init(
-      &exit_passage_detector,
-      EXIT_PASSAGE_SENSOR_GPIO_Port,
-      EXIT_PASSAGE_SENSOR_Pin,
-      GPIO_PIN_RESET
-  );
-  /* USER CODE END 2 */
+  HybridParking_Init(&parking, PARKING_NODE_ID == 1U);
+  SharedGate_Init(&gate, GATE_SIMULATION);
+  ModbusSlave_Init(&modbus, PARKING_NODE_ID, &parking,
+                   PARKING_NODE_ID == 1U ? &gate : NULL);
+  Buzzer_Init(&buzzer, false);
+  (void)HAL_UART_Receive_IT(&huart1, &rx_byte, 1U);
+/* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -157,98 +149,53 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-      // 1. Update parking spots
-      ParkingManager_Update(&parking_manager);
-
-      // 2. Store occupancy status
-      parking_occupancy_status =
-          ParkingManager_GetOccupancyMask(&parking_manager);
-
-      // 3. Read entrance and exit sensors
-
-      // Read vehicle detection sensors
-      VehicleDetector_Update(&entrance_detector);
-      VehicleDetector_Update(&exit_detector);
-
-      // Read barrier passage sensors
-      VehicleDetector_Update(&entrance_passage_detector);
-      VehicleDetector_Update(&exit_passage_detector);
-
-      /* Latch reported faults before opening requests or automatic closing. */
-      if (VehicleDetector_HasFault(&entrance_detector) ||
-          VehicleDetector_HasFault(&entrance_passage_detector))
-      {
-          BarrierController_ReportSensorFault(&entrance_barrier);
-      }
-
-      if (VehicleDetector_HasFault(&exit_detector) ||
-          VehicleDetector_HasFault(&exit_passage_detector))
-      {
-          BarrierController_ReportSensorFault(&exit_barrier);
-      }
-
-      bool entrance_detected =
-          VehicleDetector_IsDetected(&entrance_detector);
-
-      bool exit_detected =
-          VehicleDetector_IsDetected(&exit_detector);
-
-      // 4. Detect new vehicle arrival
-      if (entrance_detected && !previous_entrance_detected)
-      {
-          entrance_request_pending = 1U;
-      }
-
-      if (exit_detected && !previous_exit_detected)
-      {
-          exit_request_pending = 1U;
-      }
-
-      // 5. Save previous sensor states
-      previous_entrance_detected = entrance_detected;
-      previous_exit_detected = exit_detected;
-
-      // 6. Process entrance request
-      if (entrance_request_pending != 0U)
-      {
-          entrance_request_pending = 0U;
-
-          uint8_t available_spaces =
-              ParkingManager_GetAvailableCount(&parking_manager);
-
-          (void)BarrierController_RequestEntranceOpen(
-              &entrance_barrier,
-              available_spaces
-          );
-      }
-
-      // 7. Process exit request
-      if (exit_request_pending != 0U)
-      {
-          exit_request_pending = 0U;
-
-          (void)BarrierController_RequestExitOpen(&exit_barrier);
-      }
-
-      /* Update entrance barrier passage state */
-      uint32_t now_ms = HAL_GetTick();
-
-      BarrierController_UpdatePassage(
-          &entrance_barrier,
-          VehicleDetector_IsDetected(&entrance_passage_detector),
-          now_ms
-      );
-
-      BarrierController_UpdatePassage(
-          &exit_barrier,
-          VehicleDetector_IsDetected(&exit_passage_detector),
-          now_ms
-      );
-
-      HAL_Delay(50);
+    uint32_t now = HAL_GetTick();
+    /* PA0 USER button: bench-only physical P01 input; no external sensor assumed. */
+    HybridParking_SetPhysical(&parking,
+        HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_SET);
+    HybridParking_Tick(&parking, now);
+    ModbusSlave_Tick(&modbus, now);
+    SharedGate_Update(&gate, modbus.simulated_passage, true,
+                      gate.mode == GATE_SIMULATION, now);
+    for (uint8_t age = gate.event_count; age > 0U; --age) {
+        uint16_t sequence;
+        GateEvent event;
+        if (SharedGate_GetEvent(&gate, (uint8_t)(age - 1U), &sequence, &event) &&
+            (uint16_t)(sequence - last_buzzer_sequence) < 0x8000U &&
+            sequence != last_buzzer_sequence) {
+            Buzzer_OnEvent(&buzzer, event, sequence, now);
+            last_buzzer_sequence = sequence;
+        }
+    }
+    Buzzer_Tick(&buzzer, now);
+    HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,
+        parking.state[0] == SPACE_OCCUPIED ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin,
+        gate.state == GATE_CLOSED ? GPIO_PIN_RESET : GPIO_PIN_SET);
+    /* 3.5 character times at 115200 baud is below 1 ms; 2 ms is conservative. */
+    if (!tx_busy && rx_length > 0U && (uint32_t)(now - last_byte_ms) >= 2U) {
+        uint8_t request[MODBUS_MAX_ADU];
+        uint16_t length;
+        bool overflow;
+        __disable_irq();
+        length = rx_length;
+        overflow = rx_overflow;
+        if (!overflow) memcpy(request, rx_frame, length);
+        rx_length = 0U;
+        rx_overflow = false;
+        __enable_irq();
+        if (!overflow) {
+            size_t reply = ModbusSlave_Process(&modbus, request, length,
+                tx_frame, sizeof tx_frame, now);
+            if (reply > 0U) {
+                tx_busy = true;
+                if (HAL_UART_Transmit_IT(&huart1, tx_frame, (uint16_t)reply) != HAL_OK)
+                    tx_busy = false;
+            }
+        }
+    }
   }
-  /* USER CODE END 3 */
+/* USER CODE END 3 */
 }
 
 /**
@@ -607,10 +554,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ENTRANCE_SENSOR_Pin EXIT_SENSOR_Pin ENTRANCE_PASSAGE_SENSOR_Pin EXIT_PASSAGE_SENSOR_Pin */
-  GPIO_InitStruct.Pin = ENTRANCE_SENSOR_Pin|EXIT_SENSOR_Pin|ENTRANCE_PASSAGE_SENSOR_Pin|EXIT_PASSAGE_SENSOR_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  /* SDRAM D4, D5, D8, D9: never use as gate sensors. */
+  GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_11|GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pins : D6_Pin D7_Pin D10_Pin D11_Pin

@@ -15,12 +15,16 @@ test sanitize:
 	$(CC) $(STRICT) $(CFLAGS) $$flags $(INCLUDES) test_parking_manager.c $(APP)/Src/parking_manager.c $(APP)/Src/parking_spot.c $(COMMON) -o "$$out/manager"; "$$out/manager"; \
 	$(CC) $(STRICT) $(CFLAGS) $$flags $(INCLUDES) test_barrier_controller.c $(APP)/Src/barrier_controller.c -o "$$out/barrier_regression"; "$$out/barrier_regression"; \
 	$(CC) $(STRICT) $(CFLAGS) $$flags $(INCLUDES) test_barrier_safety.c $(APP)/Src/barrier_controller.c -o "$$out/barrier_safety"; "$$out/barrier_safety"
+	@set -eu; out=$$(mktemp -d "$${TMPDIR:-/tmp}/stm32-hybrid-tests.XXXXXX"); \
+	trap 'rm -rf "$$out"' EXIT HUP INT TERM; \
+	flags=''; if [ '$@' = sanitize ]; then flags='-fsanitize=address,undefined -fno-omit-frame-pointer'; fi; \
+	$(CC) $(STRICT) $(CFLAGS) $$flags $(INCLUDES) test_hybrid.c $(APP)/Src/hybrid_parking.c $(APP)/Src/shared_gate.c $(APP)/Src/buzzer.c $(APP)/Src/modbus_slave.c -o "$$out/hybrid"; "$$out/hybrid"
 
 analyze:
 	@set -eu; tidy=$$(command -v clang-tidy || true); \
 	if [ -z "$$tidy" ] && [ -x /opt/homebrew/opt/llvm/bin/clang-tidy ]; then tidy=/opt/homebrew/opt/llvm/bin/clang-tidy; fi; \
 	if [ -z "$$tidy" ]; then echo 'clang-tidy is unavailable' >&2; exit 1; fi; \
-	for source in $(APP)/Src/vehicle_detector.c $(APP)/Src/parking_spot.c $(APP)/Src/parking_manager.c $(APP)/Src/barrier_controller.c; do \
+	for source in $(APP)/Src/vehicle_detector.c $(APP)/Src/parking_spot.c $(APP)/Src/parking_manager.c $(APP)/Src/barrier_controller.c $(APP)/Src/hybrid_parking.c $(APP)/Src/shared_gate.c $(APP)/Src/buzzer.c $(APP)/Src/modbus_slave.c; do \
 	  "$$tidy" "$$source" -quiet -checks='-*,clang-analyzer-*,bugprone-*' -- $(STRICT) $(INCLUDES); \
 	done
 
