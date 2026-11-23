@@ -1,0 +1,255 @@
+{
+  "profile": "distributed-v2.1",
+  "status": "target-not-hardware-validated",
+  "schemaVersion": 513,
+  "addressing": "zero-based",
+  "u32WordOrder": "high-first",
+  "nodeIds": {
+    "G": 247,
+    "S1": 1,
+    "S2": 2,
+    "S3": 3,
+    "S4": 4,
+    "S5": 5
+  },
+  "nodeRoles": {
+    "G": 0,
+    "S1": 1,
+    "S2": 1,
+    "S3": 2,
+    "S4": 3,
+    "S5": 4
+  },
+  "identity": {
+    "object": "IR",
+    "function": 4,
+    "offset": 0,
+    "count": 3
+  },
+  "observation": {
+    "object": "IR",
+    "function": 4,
+    "offset": 768,
+    "count": 37,
+    "atomic": true,
+    "access": "direct-unit-id-only",
+    "gatewayCacheSupported": false,
+    "fields": [
+      "schemaVersion",
+      "nodeRole",
+      "nodeId",
+      "statusFlags",
+      "bootEpochHigh",
+      "bootEpochLow",
+      "sampleSequenceHigh",
+      "sampleSequenceLow",
+      "sampleAgeMsHigh",
+      "sampleAgeMsLow",
+      "validMask",
+      "payloadCount",
+      "payload0",
+      "payload1",
+      "payload2",
+      "payload3",
+      "payload4",
+      "payload5",
+      "payload6",
+      "payload7",
+      "recordBootEpochHigh",
+      "recordBootEpochLow",
+      "recordCommandIdHigh",
+      "recordCommandIdLow",
+      "recordStatus",
+      "recordResultCode",
+      "recordPresent",
+      "reservedZero",
+      "recordCommandWord0",
+      "recordCommandWord1",
+      "recordCommandWord2",
+      "recordCommandWord3",
+      "recordCommandWord4",
+      "recordCommandWord5",
+      "recordCommandWord6",
+      "recordCommandWord7",
+      "recordCommandWord8"
+    ],
+    "statusFlags": {
+      "0": "ready",
+      "1": "simulation",
+      "2": "local-data-valid",
+      "3": "interlock"
+    },
+    "requiredValidFlagsMask": 5,
+    "freshness": {
+      "defaultStaleAfterMs": 2000,
+      "sampleAge": "MCU monotonic elapsed since actual acquisition, not since register read",
+      "effectiveAge": "max(sampleAgeMs + roundTripMs + elapsedSinceResponseMs, firstEstimatedAgeMs + elapsedSinceSequenceFirstSeenMs)",
+      "firstEstimate": "Store sampleAgeMs + firstRoundTripMs at first response for (nodeId,bootEpoch,sampleSequence); never reset for repeated reads",
+      "validWhen": "effectiveAge < staleAfterMs; identity matches; flags ready and local-data-valid; validMask permits field; gateway path valid"
+    },
+    "coherence": "One FC04 returns one immutable latched record including identity, boot, age, payload and command result. Partial or malformed reads are unusable."
+  },
+  "payloads": {
+    "G": {
+      "count": 1,
+      "fields": [
+        "onlineMask"
+      ],
+      "validMask": 1
+    },
+    "S1": {
+      "count": 4,
+      "fields": [
+        "occupancyMask",
+        "freeCount",
+        "validMask",
+        "ledOutputMask"
+      ],
+      "fullValidMask": 3
+    },
+    "S2": {
+      "count": 4,
+      "fields": [
+        "occupancyMask",
+        "freeCount",
+        "validMask",
+        "ledOutputMask"
+      ],
+      "fullValidMask": 3
+    },
+    "S3": {
+      "count": 4,
+      "fields": [
+        "state",
+        "vehiclePresent",
+        "obstaclePresent",
+        "positionFeedback"
+      ],
+      "validMask": 15
+    },
+    "S4": {
+      "count": 4,
+      "fields": [
+        "state",
+        "vehiclePresent",
+        "obstaclePresent",
+        "positionFeedback"
+      ],
+      "validMask": 15
+    },
+    "S5": {
+      "count": 0,
+      "fields": [],
+      "validMask": 0
+    }
+  },
+  "slotValidity": {
+    "headerBits": {
+      "0": "local slot A sensor valid",
+      "1": "local slot B sensor valid"
+    },
+    "payloadMask": "payload2 must equal header validMask exactly; only bits 0 and 1 may be set",
+    "mismatch": "Reject the entire node sample, publish both slots unknown",
+    "partial": "Use occupancy bits only for valid sensors; other slots unknown",
+    "freeCount": "Usable only when both masks equal 3; otherwise payload1 must be 65535, never a capacity value",
+    "flags": "local-data-valid means coherent acquisition record, not that every sensor is valid"
+  },
+  "commandRecord": {
+    "scope": "last-processed-request-including-refusals",
+    "historyQueryable": false,
+    "match": [
+      "nodeId == requested.nodeId",
+      "observation.bootEpoch == requested.expectedBootEpoch",
+      "recordBootEpoch == requested.expectedBootEpoch",
+      "recordCommandId == requested.commandId",
+      "recordCommandWord0..8 == requested FC16 block (exact nine words)"
+    ],
+    "rejectedEcho": "Raw nine u16 words with matching record ID and requested boot; do not require sender authorization/TTL/operation policy to decode a rejection",
+    "statuses": {
+      "0": "none",
+      "1": "accepted",
+      "2": "executing",
+      "3": "done",
+      "4": "rejected",
+      "5": "expired",
+      "6": "failed"
+    },
+    "allowedStatusCodes": {
+      "accepted": [
+        0
+      ],
+      "executing": [
+        0
+      ],
+      "done": [
+        1
+      ],
+      "rejected": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "expired": [
+        6
+      ],
+      "failed": [
+        7
+      ]
+    },
+    "results": {
+      "0": "none",
+      "1": "ok",
+      "2": "interlock",
+      "3": "authorization-missing",
+      "4": "id-content-conflict",
+      "5": "boot-mismatch",
+      "6": "expired",
+      "7": "actuator-fault"
+    },
+    "otherwise": "unknown; never attribute another request's status; never auto-replay an uncertain command"
+  },
+  "barrierStates": {
+    "0": "CLOSED",
+    "1": "OPENING",
+    "2": "OPEN",
+    "3": "CLOSING",
+    "4": "FAULT"
+  },
+  "positionFeedback": {
+    "0": "estimated",
+    "1": "closed-measured",
+    "2": "open-measured",
+    "3": "intermediate-measured"
+  },
+  "passageEvidence": "unavailable in hardware v2.1; simulation requires an explicit correlated passage event",
+  "leaseRenew": {
+    "object": "HR",
+    "function": 6,
+    "offset": 4,
+    "value": 1,
+    "issuer": "backend active adapter",
+    "unitId": "same target as FC16: S3=3 or S4=4",
+    "route": "gateway routes FC06 unchanged; does not renew station leases independently in v2.1",
+    "checkedLease": "target station external-control lease, not gateway lease",
+    "durationMs": 2000,
+    "expiry": "new open requires unexpired target lease at acceptance; does not force closing"
+  },
+  "barrierCommand": {
+    "object": "HR",
+    "function": 16,
+    "offset": 256,
+    "count": 9,
+    "fields": [
+      "commandIdHigh",
+      "commandIdLow",
+      "operation",
+      "ttlMs",
+      "authorization",
+      "expectedBootEpochHigh",
+      "expectedBootEpochLow",
+      "reservedZero",
+      "reservedZero"
+    ]
+  }
+}

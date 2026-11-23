@@ -1,0 +1,23 @@
+{
+  "key": {
+    "nodeId": "S1",
+    "bootEpoch": 7,
+    "sampleSequence": 42
+  },
+  "firstRead": {
+    "sampleAgeMs": 1500,
+    "roundTripMs": 10,
+    "firstEstimatedAgeMs": 1510
+  },
+  "laterRead": {
+    "sampleAgeMs": 1500,
+    "roundTripMs": 10,
+    "elapsedSinceResponseMs": 0,
+    "elapsedSinceSequenceFirstSeenMs": 600,
+    "firstEstimatedAgeMs": 1510
+  },
+  "effectiveAgeMs": 2110,
+  "staleAfterMs": 2000,
+  "quality": "stale",
+  "occupied": null
+}

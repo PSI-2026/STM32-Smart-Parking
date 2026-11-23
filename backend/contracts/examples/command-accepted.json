@@ -1,0 +1,9 @@
+{
+  "commandId": "demo-entry-001",
+  "status": "accepted",
+  "message": "Comanda a fost înregistrată.",
+  "createdAt": 1795420800000,
+  "updatedAt": 1795420800000,
+  "sessionId": null,
+  "error": null
+}

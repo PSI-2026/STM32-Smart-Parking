@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "DATA_UNAVAILABLE",
+    "message": "Disponibilitatea parcării nu este cunoscută.",
+    "retryable": true
+  }
+}

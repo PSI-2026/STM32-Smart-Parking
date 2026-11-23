@@ -75,6 +75,10 @@ Răspunsul backend-ului respectă aceste cerințe. Codul frontend nu este inclus
 - `app/main.py`: aplicația FastAPI și endpoint-ul health.
 - `pyproject.toml`: versiunea Python acceptată și dependențele directe.
 - `uv.lock`: versiunile rezolvate ale dependențelor; se păstrează în Git.
+- [contracts/README.md](contracts/README.md): contractele țintă API și MODBUS,
+  diferențele față de frontend-ul demo și comenzile de generare/verificare.
+- `app/contracts/`: modele validate; `contracts/openapi.v1.json` descrie
+  rutele planificate, nu rute deja implementate în server.
 
 Fișierele locale `package.json`, `package-lock.json` și `tsconfig.json`
 provin din pregătirea anterioară Node.js și nu sunt folosite de acest backend.

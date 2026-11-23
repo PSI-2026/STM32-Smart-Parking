@@ -1,0 +1,89 @@
+{
+  "lanes": [
+    {
+      "nodeId": "S3",
+      "transactions": [
+        {
+          "unitId": 3,
+          "function": 4,
+          "offset": 0,
+          "count": 3,
+          "purpose": "verify v2.1 identity"
+        },
+        {
+          "unitId": 3,
+          "function": 4,
+          "offset": 768,
+          "count": 37,
+          "purpose": "read coherent boot and telemetry"
+        },
+        {
+          "unitId": 3,
+          "function": 6,
+          "offset": 4,
+          "value": 1,
+          "purpose": "renew target station lease"
+        },
+        {
+          "unitId": 3,
+          "function": 16,
+          "offset": 256,
+          "registers": [
+            0,
+            1,
+            1,
+            2000,
+            1,
+            0,
+            7,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "S4",
+      "transactions": [
+        {
+          "unitId": 4,
+          "function": 4,
+          "offset": 0,
+          "count": 3,
+          "purpose": "verify v2.1 identity"
+        },
+        {
+          "unitId": 4,
+          "function": 4,
+          "offset": 768,
+          "count": 37,
+          "purpose": "read coherent boot and telemetry"
+        },
+        {
+          "unitId": 4,
+          "function": 6,
+          "offset": 4,
+          "value": 1,
+          "purpose": "renew target station lease"
+        },
+        {
+          "unitId": 4,
+          "function": 16,
+          "offset": 256,
+          "registers": [
+            0,
+            1,
+            1,
+            2000,
+            2,
+            0,
+            7,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "rule": "Backend emits both writes; G routes to same Unit ID. Only that station's lease authorizes FC16."
+}

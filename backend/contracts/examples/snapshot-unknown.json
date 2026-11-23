@@ -1,0 +1,147 @@
+{
+  "staleAfterMs": 2000,
+  "stations": [
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": "G",
+      "role": "gateway",
+      "online": false,
+      "schemaVersion": null,
+      "bootEpoch": null,
+      "sampleSequence": null
+    },
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": "S1",
+      "role": "slots",
+      "online": false,
+      "schemaVersion": null,
+      "bootEpoch": null,
+      "sampleSequence": null
+    },
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": "S2",
+      "role": "slots",
+      "online": false,
+      "schemaVersion": null,
+      "bootEpoch": null,
+      "sampleSequence": null
+    },
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": "S3",
+      "role": "entry",
+      "online": false,
+      "schemaVersion": null,
+      "bootEpoch": null,
+      "sampleSequence": null
+    },
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": "S4",
+      "role": "exit",
+      "online": false,
+      "schemaVersion": null,
+      "bootEpoch": null,
+      "sampleSequence": null
+    },
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": "S5",
+      "role": "environment",
+      "online": false,
+      "schemaVersion": null,
+      "bootEpoch": null,
+      "sampleSequence": null
+    }
+  ],
+  "slots": [
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": 1,
+      "nodeId": "S1",
+      "occupied": null,
+      "sessionId": null
+    },
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": 2,
+      "nodeId": "S1",
+      "occupied": null,
+      "sessionId": null
+    },
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": 3,
+      "nodeId": "S2",
+      "occupied": null,
+      "sessionId": null
+    },
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": 4,
+      "nodeId": "S2",
+      "occupied": null,
+      "sessionId": null
+    }
+  ],
+  "barriers": [
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": "entry",
+      "nodeId": "S3",
+      "state": "UNKNOWN",
+      "obstacle": null,
+      "vehiclePresent": null,
+      "feedback": "unknown"
+    },
+    {
+      "quality": "unknown",
+      "updatedAt": null,
+      "ageMs": null,
+      "id": "exit",
+      "nodeId": "S4",
+      "state": "UNKNOWN",
+      "obstacle": null,
+      "vehiclePresent": null,
+      "feedback": "unknown"
+    }
+  ],
+  "contractVersion": "1.0.0",
+  "mode": "hardware",
+  "transport": "TCP",
+  "updatedAt": 1795420800000,
+  "hourlyRateBani": 500,
+  "capacity": {
+    "physicalOccupied": null,
+    "outstandingClaims": 0,
+    "available": null,
+    "reconciliationRequired": false
+  },
+  "sessions": [],
+  "events": [],
+  "commands": []
+}

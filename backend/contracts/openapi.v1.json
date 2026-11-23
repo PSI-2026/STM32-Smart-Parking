@@ -1,0 +1,2053 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Smart Parking target API",
+    "version": "1.0.0",
+    "description": "Integration target. Only health is implemented at step 2; other operations are planned."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000"
+    }
+  ],
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "x-implemented": true,
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/snapshot": {
+      "get": {
+        "operationId": "getSnapshot",
+        "x-implemented": false,
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParkingSnapshot"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/commands": {
+      "post": {
+        "operationId": "submitCommand",
+        "x-implemented": false,
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ID already identifies a different normalized action",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request; command ID not reserved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Persistence unavailable; command ID not reserved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Previously stored command (idempotent replay)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommandRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/commands/{commandId}": {
+      "get": {
+        "operationId": "getCommand",
+        "x-implemented": false,
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request; command ID not reserved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "commandId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "title": "Commandid",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/sessions": {
+      "get": {
+        "operationId": "listSessions",
+        "x-implemented": false,
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request; command ID not reserved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/sessions/{sessionId}": {
+      "get": {
+        "operationId": "getSession",
+        "x-implemented": false,
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParkingSession"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request; command ID not reserved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/events": {
+      "get": {
+        "operationId": "listEvents",
+        "x-implemented": false,
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request; command ID not reserved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ApiError",
+        "type": "object"
+      },
+      "Barrier": {
+        "additionalProperties": false,
+        "properties": {
+          "quality": {
+            "enum": [
+              "valid",
+              "unknown",
+              "stale",
+              "unavailable"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          },
+          "ageMs": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agems"
+          },
+          "id": {
+            "enum": [
+              "entry",
+              "exit"
+            ],
+            "title": "Id",
+            "type": "string"
+          },
+          "nodeId": {
+            "enum": [
+              "S3",
+              "S4"
+            ],
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "CLOSED",
+              "OPENING",
+              "OPEN",
+              "CLOSING",
+              "FAULT",
+              "UNKNOWN"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "obstacle": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Obstacle"
+          },
+          "vehiclePresent": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehiclepresent"
+          },
+          "feedback": {
+            "enum": [
+              "estimated",
+              "measured",
+              "unknown"
+            ],
+            "title": "Feedback",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quality",
+          "updatedAt",
+          "ageMs",
+          "id",
+          "nodeId",
+          "state",
+          "obstacle",
+          "vehiclePresent",
+          "feedback"
+        ],
+        "title": "Barrier",
+        "type": "object"
+      },
+      "Capacity": {
+        "additionalProperties": false,
+        "properties": {
+          "physicalOccupied": {
+            "anyOf": [
+              {
+                "maximum": 4,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Physicaloccupied"
+          },
+          "outstandingClaims": {
+            "maximum": 4,
+            "minimum": 0,
+            "title": "Outstandingclaims",
+            "type": "integer"
+          },
+          "available": {
+            "anyOf": [
+              {
+                "maximum": 4,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available"
+          },
+          "reconciliationRequired": {
+            "title": "Reconciliationrequired",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "physicalOccupied",
+          "outstandingClaims",
+          "available",
+          "reconciliationRequired"
+        ],
+        "title": "Capacity",
+        "type": "object"
+      },
+      "CommandObservation": {
+        "additionalProperties": false,
+        "description": "Parsed from ONE atomic FC04 block, never assembled from separate reads.",
+        "properties": {
+          "nodeId": {
+            "enum": [
+              "S3",
+              "S4"
+            ],
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "bootEpoch": {
+            "maximum": 4294967295,
+            "minimum": 0,
+            "title": "Bootepoch",
+            "type": "integer"
+          },
+          "record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeviceCommandResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "nodeId",
+          "bootEpoch",
+          "record"
+        ],
+        "title": "CommandObservation",
+        "type": "object"
+      },
+      "CommandRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "commandId": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Commandid",
+            "type": "string"
+          },
+          "action": {
+            "discriminator": {
+              "mapping": {
+                "enter": "#/components/schemas/EnterAction",
+                "exit": "#/components/schemas/ExitAction",
+                "pay": "#/components/schemas/PayAction",
+                "set-all-slot-sensors": "#/components/schemas/SetAllSlotSensorsAction",
+                "set-barrier-presence": "#/components/schemas/SetBarrierPresenceAction",
+                "set-node-online": "#/components/schemas/SetNodeOnlineAction",
+                "set-obstacle": "#/components/schemas/SetObstacleAction",
+                "set-slot-sensor": "#/components/schemas/SetSlotSensorAction",
+                "set-transport": "#/components/schemas/SetTransportAction"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EnterAction"
+              },
+              {
+                "$ref": "#/components/schemas/PayAction"
+              },
+              {
+                "$ref": "#/components/schemas/ExitAction"
+              },
+              {
+                "$ref": "#/components/schemas/SetSlotSensorAction"
+              },
+              {
+                "$ref": "#/components/schemas/SetAllSlotSensorsAction"
+              },
+              {
+                "$ref": "#/components/schemas/SetNodeOnlineAction"
+              },
+              {
+                "$ref": "#/components/schemas/SetObstacleAction"
+              },
+              {
+                "$ref": "#/components/schemas/SetBarrierPresenceAction"
+              },
+              {
+                "$ref": "#/components/schemas/SetTransportAction"
+              }
+            ],
+            "title": "Action"
+          }
+        },
+        "required": [
+          "commandId",
+          "action"
+        ],
+        "title": "CommandRequest",
+        "type": "object"
+      },
+      "CommandResult": {
+        "additionalProperties": false,
+        "properties": {
+          "commandId": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Commandid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "accepted",
+              "executing",
+              "done",
+              "rejected",
+              "unknown",
+              "expired",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "createdAt": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "title": "Createdat",
+            "type": "integer"
+          },
+          "updatedAt": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "title": "Updatedat",
+            "type": "integer"
+          },
+          "sessionId": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sessionid"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "commandId",
+          "status",
+          "message",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "CommandResult",
+        "type": "object"
+      },
+      "DeviceCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "nodeId": {
+            "enum": [
+              "S3",
+              "S4"
+            ],
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "commandId": {
+            "maximum": 4294967295,
+            "minimum": 1,
+            "title": "Commandid",
+            "type": "integer"
+          },
+          "operation": {
+            "enum": [
+              "open",
+              "reset-fault"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "ttlMs": {
+            "maximum": 10000,
+            "minimum": 0,
+            "title": "Ttlms",
+            "type": "integer"
+          },
+          "authorization": {
+            "enum": [
+              "none",
+              "capacity",
+              "payment"
+            ],
+            "title": "Authorization",
+            "type": "string"
+          },
+          "expectedBootEpoch": {
+            "maximum": 4294967295,
+            "minimum": 0,
+            "title": "Expectedbootepoch",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "nodeId",
+          "commandId",
+          "operation",
+          "ttlMs",
+          "authorization",
+          "expectedBootEpoch"
+        ],
+        "title": "DeviceCommand",
+        "type": "object"
+      },
+      "DeviceCommandResult": {
+        "additionalProperties": false,
+        "description": "Requested identity; known results require a matching atomic record.",
+        "properties": {
+          "nodeId": {
+            "enum": [
+              "S3",
+              "S4"
+            ],
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "commandId": {
+            "maximum": 4294967295,
+            "minimum": 1,
+            "title": "Commandid",
+            "type": "integer"
+          },
+          "bootEpoch": {
+            "maximum": 4294967295,
+            "minimum": 0,
+            "title": "Bootepoch",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "accepted",
+              "executing",
+              "done",
+              "rejected",
+              "unknown",
+              "expired",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "resultCode": {
+            "anyOf": [
+              {
+                "maximum": 7,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultcode"
+          },
+          "commandBlock": {
+            "anyOf": [
+              {
+                "items": {
+                  "maximum": 65535,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "maxItems": 9,
+                "minItems": 9,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commandblock"
+          },
+          "evidence": {
+            "enum": [
+              "coherent-record",
+              "simulation",
+              "unproven"
+            ],
+            "title": "Evidence",
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "matched",
+              "write-timeout",
+              "record-mismatch",
+              "boot-changed",
+              "record-unavailable",
+              "incoherent"
+            ],
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nodeId",
+          "commandId",
+          "bootEpoch",
+          "status",
+          "resultCode",
+          "commandBlock",
+          "evidence",
+          "reason"
+        ],
+        "title": "DeviceCommandResult",
+        "type": "object"
+      },
+      "DeviceTelemetry": {
+        "additionalProperties": false,
+        "description": "Hardware fields only: no session IDs, tariffs or payments.",
+        "properties": {
+          "staleAfterMs": {
+            "default": 2000,
+            "maximum": 10000,
+            "minimum": 500,
+            "title": "Staleafterms",
+            "type": "integer"
+          },
+          "stations": {
+            "items": {
+              "$ref": "#/components/schemas/Station"
+            },
+            "title": "Stations",
+            "type": "array"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/SlotTelemetry"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "barriers": {
+            "items": {
+              "$ref": "#/components/schemas/Barrier"
+            },
+            "title": "Barriers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stations",
+          "slots",
+          "barriers"
+        ],
+        "title": "DeviceTelemetry",
+        "type": "object"
+      },
+      "EnterAction": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "enter",
+            "title": "Type",
+            "type": "string"
+          },
+          "plate": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Plate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "plate"
+        ],
+        "title": "EnterAction",
+        "type": "object"
+      },
+      "ErrorDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "VALIDATION_ERROR",
+              "NOT_FOUND",
+              "IDEMPOTENCY_CONFLICT",
+              "SESSION_CONFLICT",
+              "PARKING_FULL",
+              "DATA_UNAVAILABLE",
+              "PAYMENT_REQUIRED",
+              "INTERLOCK_ACTIVE",
+              "SIMULATION_ONLY",
+              "DEVICE_INCOMPATIBLE",
+              "DEVICE_TIMEOUT",
+              "COMMAND_FAILED",
+              "SERVICE_UNAVAILABLE",
+              "INTERNAL_ERROR"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "EventPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ParkingEvent"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "EventPage",
+        "type": "object"
+      },
+      "ExitAction": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "exit",
+            "title": "Type",
+            "type": "string"
+          },
+          "sessionId": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Sessionid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "sessionId"
+        ],
+        "title": "ExitAction",
+        "type": "object"
+      },
+      "FreshnessProof": {
+        "additionalProperties": false,
+        "properties": {
+          "sampleAgeMs": {
+            "maximum": 4294967295,
+            "minimum": 0,
+            "title": "Sampleagems",
+            "type": "integer"
+          },
+          "roundTripMs": {
+            "minimum": 0,
+            "title": "Roundtripms",
+            "type": "integer"
+          },
+          "elapsedSinceResponseMs": {
+            "minimum": 0,
+            "title": "Elapsedsinceresponsems",
+            "type": "integer"
+          },
+          "elapsedSinceSequenceFirstSeenMs": {
+            "minimum": 0,
+            "title": "Elapsedsincesequencefirstseenms",
+            "type": "integer"
+          },
+          "firstEstimatedAgeMs": {
+            "minimum": 0,
+            "title": "Firstestimatedagems",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sampleAgeMs",
+          "roundTripMs",
+          "elapsedSinceResponseMs",
+          "elapsedSinceSequenceFirstSeenMs",
+          "firstEstimatedAgeMs"
+        ],
+        "title": "FreshnessProof",
+        "type": "object"
+      },
+      "Health": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "healthy",
+            "default": "healthy",
+            "title": "Status",
+            "type": "string"
+          },
+          "service": {
+            "const": "smart-parking-backend",
+            "default": "smart-parking-backend",
+            "title": "Service",
+            "type": "string"
+          },
+          "version": {
+            "default": "0.1.0",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "title": "Health",
+        "type": "object"
+      },
+      "ParkingEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "at": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "title": "At",
+            "type": "integer"
+          },
+          "level": {
+            "enum": [
+              "info",
+              "success",
+              "warning",
+              "error"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "nodeId": {
+            "anyOf": [
+              {
+                "enum": [
+                  "G",
+                  "S1",
+                  "S2",
+                  "S3",
+                  "S4",
+                  "S5"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Nodeid"
+          },
+          "sessionId": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sessionid"
+          },
+          "commandId": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Commandid"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "level",
+          "code",
+          "message"
+        ],
+        "title": "ParkingEvent",
+        "type": "object"
+      },
+      "ParkingSession": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Id",
+            "type": "string"
+          },
+          "plate": {
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Plate",
+            "type": "string"
+          },
+          "slotId": {
+            "anyOf": [
+              {
+                "maximum": 4,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slotid"
+          },
+          "enteredAt": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enteredat"
+          },
+          "exitedAt": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exitedat"
+          },
+          "status": {
+            "enum": [
+              "pending_entry",
+              "active",
+              "paid",
+              "pending_exit",
+              "completed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "hourlyRateBani": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "title": "Hourlyratebani",
+            "type": "integer"
+          },
+          "amountDueBani": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "title": "Amountduebani",
+            "type": "integer"
+          },
+          "paidBani": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "title": "Paidbani",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "plate",
+          "slotId",
+          "enteredAt",
+          "exitedAt",
+          "status",
+          "hourlyRateBani",
+          "amountDueBani",
+          "paidBani"
+        ],
+        "title": "ParkingSession",
+        "type": "object"
+      },
+      "ParkingSlot": {
+        "additionalProperties": false,
+        "properties": {
+          "quality": {
+            "enum": [
+              "valid",
+              "unknown",
+              "stale",
+              "unavailable"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          },
+          "ageMs": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agems"
+          },
+          "id": {
+            "maximum": 4,
+            "minimum": 1,
+            "title": "Id",
+            "type": "integer"
+          },
+          "nodeId": {
+            "enum": [
+              "S1",
+              "S2"
+            ],
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "occupied": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occupied"
+          },
+          "sessionId": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sessionid"
+          }
+        },
+        "required": [
+          "quality",
+          "updatedAt",
+          "ageMs",
+          "id",
+          "nodeId",
+          "occupied",
+          "sessionId"
+        ],
+        "title": "ParkingSlot",
+        "type": "object"
+      },
+      "ParkingSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "staleAfterMs": {
+            "default": 2000,
+            "maximum": 10000,
+            "minimum": 500,
+            "title": "Staleafterms",
+            "type": "integer"
+          },
+          "stations": {
+            "items": {
+              "$ref": "#/components/schemas/Station"
+            },
+            "title": "Stations",
+            "type": "array"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/ParkingSlot"
+            },
+            "title": "Slots",
+            "type": "array"
+          },
+          "barriers": {
+            "items": {
+              "$ref": "#/components/schemas/Barrier"
+            },
+            "title": "Barriers",
+            "type": "array"
+          },
+          "contractVersion": {
+            "const": "1.0.0",
+            "default": "1.0.0",
+            "title": "Contractversion",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "simulation",
+              "hardware"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "transport": {
+            "enum": [
+              "TCP",
+              "USB"
+            ],
+            "title": "Transport",
+            "type": "string"
+          },
+          "updatedAt": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "title": "Updatedat",
+            "type": "integer"
+          },
+          "hourlyRateBani": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "title": "Hourlyratebani",
+            "type": "integer"
+          },
+          "capacity": {
+            "$ref": "#/components/schemas/Capacity"
+          },
+          "sessions": {
+            "items": {
+              "$ref": "#/components/schemas/ParkingSession"
+            },
+            "title": "Sessions",
+            "type": "array"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ParkingEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "commands": {
+            "items": {
+              "$ref": "#/components/schemas/CommandResult"
+            },
+            "title": "Commands",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stations",
+          "slots",
+          "barriers",
+          "mode",
+          "transport",
+          "updatedAt",
+          "hourlyRateBani",
+          "capacity",
+          "sessions",
+          "events",
+          "commands"
+        ],
+        "title": "ParkingSnapshot",
+        "type": "object"
+      },
+      "PassageEvidence": {
+        "additionalProperties": false,
+        "description": "Explicit evidence, never inferred from vehiclePresent transitions.",
+        "properties": {
+          "nodeId": {
+            "enum": [
+              "S3",
+              "S4"
+            ],
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "commandId": {
+            "maximum": 4294967295,
+            "minimum": 1,
+            "title": "Commandid",
+            "type": "integer"
+          },
+          "bootEpoch": {
+            "maximum": 4294967295,
+            "minimum": 0,
+            "title": "Bootepoch",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "confirmed",
+              "unavailable",
+              "lost"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "simulation",
+              "none"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "evidenceId": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidenceid"
+          },
+          "occurredAt": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurredat"
+          },
+          "commandBlock": {
+            "anyOf": [
+              {
+                "items": {
+                  "maximum": 65535,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "maxItems": 9,
+                "minItems": 9,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commandblock"
+          }
+        },
+        "required": [
+          "nodeId",
+          "commandId",
+          "bootEpoch",
+          "state",
+          "source",
+          "evidenceId",
+          "occurredAt",
+          "commandBlock"
+        ],
+        "title": "PassageEvidence",
+        "type": "object"
+      },
+      "PayAction": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "pay",
+            "title": "Type",
+            "type": "string"
+          },
+          "sessionId": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Sessionid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "sessionId"
+        ],
+        "title": "PayAction",
+        "type": "object"
+      },
+      "SessionPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ParkingSession"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "SessionPage",
+        "type": "object"
+      },
+      "SetAllSlotSensorsAction": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "set-all-slot-sensors",
+            "title": "Type",
+            "type": "string"
+          },
+          "occupied": {
+            "title": "Occupied",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "occupied"
+        ],
+        "title": "SetAllSlotSensorsAction",
+        "type": "object"
+      },
+      "SetBarrierPresenceAction": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "set-barrier-presence",
+            "title": "Type",
+            "type": "string"
+          },
+          "barrierId": {
+            "enum": [
+              "entry",
+              "exit"
+            ],
+            "title": "Barrierid",
+            "type": "string"
+          },
+          "present": {
+            "title": "Present",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "barrierId",
+          "present"
+        ],
+        "title": "SetBarrierPresenceAction",
+        "type": "object"
+      },
+      "SetNodeOnlineAction": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "set-node-online",
+            "title": "Type",
+            "type": "string"
+          },
+          "nodeId": {
+            "enum": [
+              "G",
+              "S1",
+              "S2",
+              "S3",
+              "S4",
+              "S5"
+            ],
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "online": {
+            "title": "Online",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "nodeId",
+          "online"
+        ],
+        "title": "SetNodeOnlineAction",
+        "type": "object"
+      },
+      "SetObstacleAction": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "set-obstacle",
+            "title": "Type",
+            "type": "string"
+          },
+          "barrierId": {
+            "enum": [
+              "entry",
+              "exit"
+            ],
+            "title": "Barrierid",
+            "type": "string"
+          },
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "barrierId",
+          "active"
+        ],
+        "title": "SetObstacleAction",
+        "type": "object"
+      },
+      "SetSlotSensorAction": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "set-slot-sensor",
+            "title": "Type",
+            "type": "string"
+          },
+          "slotId": {
+            "maximum": 4,
+            "minimum": 1,
+            "title": "Slotid",
+            "type": "integer"
+          },
+          "occupied": {
+            "title": "Occupied",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type",
+          "slotId",
+          "occupied"
+        ],
+        "title": "SetSlotSensorAction",
+        "type": "object"
+      },
+      "SetTransportAction": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "const": "set-transport",
+            "title": "Type",
+            "type": "string"
+          },
+          "transport": {
+            "enum": [
+              "TCP",
+              "USB"
+            ],
+            "title": "Transport",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "transport"
+        ],
+        "title": "SetTransportAction",
+        "type": "object"
+      },
+      "SlotSample": {
+        "additionalProperties": false,
+        "description": "Payload validity after the adapter checks frame/path identity and age.",
+        "properties": {
+          "headerValidMask": {
+            "maximum": 3,
+            "minimum": 0,
+            "title": "Headervalidmask",
+            "type": "integer"
+          },
+          "payloadValidMask": {
+            "maximum": 3,
+            "minimum": 0,
+            "title": "Payloadvalidmask",
+            "type": "integer"
+          },
+          "occupancyMask": {
+            "maximum": 3,
+            "minimum": 0,
+            "title": "Occupancymask",
+            "type": "integer"
+          },
+          "freeCount": {
+            "maximum": 65535,
+            "minimum": 0,
+            "title": "Freecount",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "headerValidMask",
+          "payloadValidMask",
+          "occupancyMask",
+          "freeCount"
+        ],
+        "title": "SlotSample",
+        "type": "object"
+      },
+      "SlotTelemetry": {
+        "additionalProperties": false,
+        "properties": {
+          "quality": {
+            "enum": [
+              "valid",
+              "unknown",
+              "stale",
+              "unavailable"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          },
+          "ageMs": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agems"
+          },
+          "id": {
+            "maximum": 4,
+            "minimum": 1,
+            "title": "Id",
+            "type": "integer"
+          },
+          "nodeId": {
+            "enum": [
+              "S1",
+              "S2"
+            ],
+            "title": "Nodeid",
+            "type": "string"
+          },
+          "occupied": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occupied"
+          }
+        },
+        "required": [
+          "quality",
+          "updatedAt",
+          "ageMs",
+          "id",
+          "nodeId",
+          "occupied"
+        ],
+        "title": "SlotTelemetry",
+        "type": "object"
+      },
+      "Station": {
+        "additionalProperties": false,
+        "properties": {
+          "quality": {
+            "enum": [
+              "valid",
+              "unknown",
+              "stale",
+              "unavailable"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          },
+          "ageMs": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agems"
+          },
+          "id": {
+            "enum": [
+              "G",
+              "S1",
+              "S2",
+              "S3",
+              "S4",
+              "S5"
+            ],
+            "title": "Id",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "gateway",
+              "slots",
+              "entry",
+              "exit",
+              "environment"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "online": {
+            "title": "Online",
+            "type": "boolean"
+          },
+          "schemaVersion": {
+            "anyOf": [
+              {
+                "maximum": 65535,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schemaversion"
+          },
+          "bootEpoch": {
+            "anyOf": [
+              {
+                "maximum": 4294967295,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bootepoch"
+          },
+          "sampleSequence": {
+            "anyOf": [
+              {
+                "maximum": 4294967295,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Samplesequence"
+          }
+        },
+        "required": [
+          "quality",
+          "updatedAt",
+          "ageMs",
+          "id",
+          "role",
+          "online",
+          "schemaVersion",
+          "bootEpoch"
+        ],
+        "title": "Station",
+        "type": "object"
+      }
+    }
+  }
+}

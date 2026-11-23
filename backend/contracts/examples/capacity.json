@@ -1,0 +1,35 @@
+{
+  "lastSpace": [
+    {
+      "physicalOccupied": 3,
+      "outstandingClaims": 0,
+      "available": 1,
+      "reconciliationRequired": false
+    },
+    {
+      "physicalOccupied": 3,
+      "outstandingClaims": 1,
+      "available": 0,
+      "reconciliationRequired": false
+    },
+    {
+      "physicalOccupied": 3,
+      "outstandingClaims": 1,
+      "available": 0,
+      "reconciliationRequired": false
+    },
+    {
+      "physicalOccupied": 4,
+      "outstandingClaims": 0,
+      "available": 0,
+      "reconciliationRequired": false
+    }
+  ],
+  "ambiguousOccupancy": {
+    "physicalOccupied": 4,
+    "outstandingClaims": 1,
+    "available": null,
+    "reconciliationRequired": true
+  },
+  "rule": "Admission and claim creation are atomic. Passage alone never consumes a claim; transfer to physical occupancy requires correlated evidence."
+}
