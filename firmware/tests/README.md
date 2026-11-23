@@ -1,33 +1,31 @@
-# Barrier controller regression tests
+# Native firmware unit tests
 
-These tests compile the production controller as native C, without STM32 HAL
-or hardware. Run from the repository root with GCC:
+Run `make -C firmware/tests test` from the repository root. The runner compiles
+the four production C modules with minimal HAL GPIO mocks, then runs the existing
+barrier regressions and new detector, spot, manager, and barrier safety tests.
+It uses C11, `-Wall -Wextra -Werror`, fails on compile or assertion errors, and
+keeps temporary binaries outside tracked source directories.
 
-```sh
-gcc -std=c11 -Wall -Wextra -Werror -Ifirmware/STM32_SmartParking/App/Inc firmware/tests/test_barrier_controller.c firmware/STM32_SmartParking/App/Src/barrier_controller.c -o /tmp/test_barrier_controller
-/tmp/test_barrier_controller
-```
+Use `make -C firmware/tests sanitize` for AddressSanitizer and
+UndefinedBehaviorSanitizer. `make -C firmware/tests analyze` requires
+`clang-tidy` (found on `PATH` or through Homebrew LLVM) and treats all reported
+`clang-analyzer-*` and `bugprone-*` diagnostics as errors. GitHub Actions runs
+all three targets. `make -C firmware/tests check` runs them locally in order.
+`CC` and `CFLAGS` can be overridden as normal Make variables.
 
-With an x64 Native Tools Command Prompt for Visual Studio on Windows:
+The analysis target excludes only CubeMX-generated `Core/Inc/main.h`, whose
+`__MAIN_H` guard triggers `bugprone-reserved-identifier`. The existing public
+`VehicleDetector_Init` signature triggers
+`bugprone-easily-swappable-parameters`; a check-specific `NOLINTBEGIN` /
+`NOLINTEND` pair wraps only that declaration in `vehicle_detector.c`. No source
+lines are filtered, so other enabled diagnostics on those lines remain active.
+The function signature and behavior are unchanged.
 
-```bat
-cl /nologo /std:c11 /W4 /WX /Ifirmware\STM32_SmartParking\App\Inc firmware\tests\test_barrier_controller.c firmware\STM32_SmartParking\App\Src\barrier_controller.c /Fe:%TEMP%\test_barrier_controller.exe /Fo:%TEMP%\
-%TEMP%\test_barrier_controller.exe
-```
+The mocks enforce explicit sensor input setup and record GPIO reads and writes.
+They use the GPIO symbols and pin mappings from the production `main.h`.
 
-Alternatively, with `uv` installed, use Zig's portable C compiler in PowerShell:
-
-```powershell
-uv run --no-project --python 3.12 --with ziglang python -m ziglang cc -std=c11 -Wall -Wextra -Werror -Ifirmware/STM32_SmartParking/App/Inc firmware/tests/test_barrier_controller.c firmware/STM32_SmartParking/App/Src/barrier_controller.c -o "$env:TEMP/test_barrier_controller.exe"
-& "$env:TEMP/test_barrier_controller.exe"
-```
-
-Coverage includes capacity rejection, waiting for passage, 499/500 ms clearance,
-redetection at the deadline, repeated opening requests during a cycle, latched
-faults while closed/open, and the 32-bit tick counter wrapping.
-
-The main loop propagates faults from either detector for each lane before
-processing opening requests and passage updates. A fault freezes that barrier's
-logical position until reinitialization; automatic fault detection and physical
-servo control remain outside this implementation. Native tests do not validate
-GPIO wiring, the ARM build, Renode, or hardware timing.
+These host tests do not compile generated `main.c`, validate GPIO wiring,
+interrupt timing, ARM builds, real sensor fault detection, or physical servo
+control. A reported fault freezes the barrier's logical position. Gate motion,
+motor current limits, startup with an obstructed beam, and concurrent sensor
+changes still need on-board validation.
