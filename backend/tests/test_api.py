@@ -30,7 +30,7 @@ class ApiTests(unittest.TestCase):
         self.path = Path(self.directory.name) / "parking.sqlite3"
         self.service = ParkingService(Database(self.path), clock_ms=lambda: 1_800_000_000_000,
                                       monotonic_ms=lambda: 1000)
-        self.settings = Settings(database_path=self.path, worker_enabled=False)
+        self.settings = Settings(database_path=self.path, worker_enabled=False, simulator_enabled=False)
         self.app = create_app(self.settings, service=self.service)
         self.client = self.enterContext(TestClient(self.app, raise_server_exceptions=False))
 

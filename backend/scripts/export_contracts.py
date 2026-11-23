@@ -67,7 +67,7 @@ def artifacts() -> dict[str, dict]:
     submit["responses"]["200"] = response("CommandResult", "Previously stored command (idempotent replay)")
     spec = {
         "openapi": "3.1.0", "info": {"title": "Smart Parking target API", "version": "1.0.0",
-            "description": "HTTP API implemented in step 4. Device I/O and the simulator are integrated in subsequent steps."},
+            "description": "HTTP API with persistent simulator. Physical device I/O is integrated separately."},
         "servers": [{"url": "http://127.0.0.1:8000"}],
         "paths": {
             "/api/v1/health": {"get": operation("healthCheck", "Health", implemented=True)},

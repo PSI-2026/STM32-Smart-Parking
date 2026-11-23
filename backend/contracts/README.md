@@ -1,7 +1,7 @@
 # Contracte de integrare — API v1.0.0 / MODBUS țintă v2.1
 
-Rutele HTTP v1 sunt implementate în pasul 4; integrarea simulatorului și
-a transporturilor urmează. Nici firmware-ul actual, nici vechea hartă locală v2.0 nu oferă
+Rutele HTTP v1 sunt implementate în pasul 4, iar simulatorul persistent
+în pasul 5. Integrarea transporturilor urmează. Nici firmware-ul actual, nici vechea hartă locală v2.0 nu oferă
 încă extensia v2.1 descrisă aici. Lipsa ei blochează scrierile hardware;
 nu se încearcă autodetectare prin comenzi sau fallback la v2.0/single-slave.
 

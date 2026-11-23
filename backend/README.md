@@ -1,8 +1,8 @@
 # Backend STM32 Smart Parking
 
-Backend Python + FastAPI, cu API HTTP, persistență SQLite și worker pentru
-regulile parcării. Simulatorul complet și comunicația STM32 urmează;
-fără adaptor, datele parcării sunt necunoscute.
+Backend Python + FastAPI, cu API HTTP, persistență SQLite și simulator
+persistent pentru fluxul complet intrare/plată/ieșire. Pornește implicit
+în simulare; comunicația fizică STM32 urmează în pasul 6.
 
 ## Cerințe
 
@@ -83,6 +83,7 @@ Răspunsul backend-ului respectă aceste cerințe. Codul frontend nu este inclus
 - [BUSINESS.md](BUSINESS.md): serviciul tranzacțional din pasul 3,
   recuperarea după restart și limitele de integrare cu simulatorul/hardware-ul.
 - [API.md](API.md): configurația, rutele HTTP, worker-ul și verificarea pasului 4.
+- [SIMULATOR.md](SIMULATOR.md): scenariul complet, controalele și persistența pasului 5.
 
 Fișierele locale `package.json`, `package-lock.json` și `tsconfig.json`
 provin din pregătirea anterioară Node.js și nu sunt folosite de acest backend.

@@ -2,7 +2,7 @@
 
 Implementarea este în `app/storage.py`, `app/telemetry.py` și `app/parking.py`. Ea poate fi
 testată independent de HTTP și hardware. Rutele și worker-ul sunt conectate
-în pasul 4, descris în [API.md](API.md); simulatorul urmează în pasul 5,
+în pasul 4, descris în [API.md](API.md); simulatorul este conectat în pasul 5,
 transporturile în pasul 6. Nu există I/O MODBUS în tranzacții.
 
 ## Inițializare
@@ -18,16 +18,22 @@ service = ParkingService(database, mode="simulation", hourly_rate_bani=500)
 service.recover()  # o singură dată la startup, înainte de worker și cereri
 ```
 
-`Database` creează schema curentă v2, verificată prin `PRAGMA user_version`.
+`Database` creează schema curentă v3, verificată prin `PRAGMA user_version`.
 Migrarea tranzacțională din v1 adaugă istoricul independent al telemetriei
 și marcajele persistente de contradicție/refuz. Datele existente se păstrează;
 refuzurile și contradicțiile demonstrabile din ultimul rezultat v1 sunt
 preluate în marcajele noi.
+Migrarea v2→v3 adaugă starea și comenzile simulatorului, fără a modifica
+sesiunile sau plățile existente.
 O versiune necunoscută este refuzată; nu se șterg sau reinițializează datele.
 SQLite folosește WAL, foreign keys, synchronous FULL și busy timeout 5 s.
-Fiecare apel de scriere are o conexiune proprie și `BEGIN IMMEDIATE`;
+Fiecare unitate de lucru exterioară are o conexiune proprie și `BEGIN IMMEDIATE`;
 citirile au tranzacții scurte. Tranzacțiile nu sunt ținute peste `await`
 sau cereri de rețea. Nu sunt necesare dependențe suplimentare.
+În pasul 5, apelurile imbricate ale simulatorului CPU/SQLite partajează
+conexiunea per thread și folosesc SAVEPOINT. Un context read-only nu poate
+fi promovat la scriere. Nu se folosesc aceste tranzacții exterioare pentru
+I/O fizic sau await.
 
 Se rulează **un singur proces de control**, fără mai mulți worker-i Uvicorn
 asupra aceluiași dispozitiv. În interiorul procesului, thread-urile pot
@@ -59,8 +65,9 @@ nu există încă un registru separat de proprietari sau metadate vehicul.
 Un număr de înmatriculare are cel mult o sesiune neînchisă, garantat și prin
 index unic. Un loc are cel mult o asociere activă. Modul hardware refuză
 acțiunile demo prin rezultat persistent SIMULATION_ONLY. În simulation,
-procesarea acțiunilor demo este rezervată pasului 5 și ridică momentan
-NotImplementedError; admiterea rămâne accepted, fără efecte parțiale.
+procesarea acțiunilor demo este atașată de SimulatorRuntime în pasul 5.
+Fără simulator activ, metoda ridică NotImplementedError, iar worker-ul
+exclude aceste acțiuni; admiterea rămâne accepted, fără efecte parțiale.
 
 `BusinessFault.detail` folosește codurile ErrorDetail aprobate; adaptorul
 HTTP va traduce excepțiile apărute înainte de admitere în ApiError. Refuzul

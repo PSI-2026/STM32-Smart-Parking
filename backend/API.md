@@ -18,11 +18,15 @@ niciun fișier `.env`, inclusiv cel local rămas din pregătirea Node.js.
 | PARKING_HOURLY_RATE_BANI | 500 | Rata pentru sesiuni noi; rata sesiunilor existente nu se schimbă. |
 | PARKING_WORKER_ENABLED | true | Procesarea automată a cozii de business. |
 | PARKING_WORKER_INTERVAL_SECONDS | 0.1 | Interval 0.05–5 secunde între loturi. |
+| PARKING_SIMULATOR_ENABLED | true | Simulator activ numai în modul simulation; false păstrează API-ul fără adaptor. |
+| PARKING_SIMULATOR_STEP_DELAY_MS | 200 | 50–10000 ms pe etapă de barieră virtuală. |
+| PARKING_SIMULATOR_AUTO_PASSAGE | true | Evenimente automate explicite; false este util pentru teste de așteptare. |
 
 Se rulează un singur proces Uvicorn, fără `--workers` multiplu.
 Factory-ul `create_app(settings, service=...)` permite teste cu baze
 temporare și ceas controlat. Importul modulului nu deschide DB. Lifespan-ul
-creează serviciul, execută recover înainte de cereri și pornește worker-ul.
+creează serviciul, execută recover înainte de cereri, conectează simulatorul
+când este activat și pornește worker-ul.
 La închidere semnalizează oprirea și așteaptă finalizarea lucrului curent.
 
 ## Rute
@@ -60,8 +64,9 @@ Refuzurile operaționale apar în CommandResult.error, nu retroactiv în HTTP.
 
 Worker-ul procesează enter/pay/exit din coada accepted în loturi de cel
 mult 50. În hardware procesează și refuză acțiunile demo. În simulation,
-acțiunile demo rămân accepted până la integrarea simulatorului în pasul 5;
-nu sunt aplicate și nu blochează procesarea celorlalte comenzi.
+simulatorul din pasul 5 procesează și controalele senzorilor, nodurilor,
+obstacolelor, prezenței și transportului. Dacă simulatorul este dezactivat,
+acțiunile demo rămân accepted și nu blochează celelalte comenzi.
 
 O excepție de procesare păstrează comanda accepted prin rollback și aplică
 un backoff de 5 secunde în memoria worker-ului. Selecția umple mai întâi
@@ -76,11 +81,16 @@ nou; sub un flux nelimitat de comenzi noi, retry-urile pot fi amânate.
 La restart, evidența încercărilor/backoff-ul se poate reseta; efectele de business
 rămân protejate de tranzacție/idempotență. Oprirea se verifică între comenzi.
 
-Acest worker nu apelează claim_dispatch și nu trimite comenzi fizice.
+Cu simulatorul activ, coordinatorul apelează claim_dispatch numai pentru
+dispozitive virtuale și produce dovezi explicite de trecere. Starea virtuală
+și efectele business se salvează atomic. Nu se trimit comenzi fizice.
+O trecere virtuală eșuată este izolată într-un savepoint și devine acces
+incert; nu anulează repetat comenzile independente sau cealaltă bandă.
 Fără adaptor, pornirea afișează date necunoscute și o intrare poate primi
 rejected/DATA_UNAVAILABLE. Cu telemetrie injectată de teste, accesul poate
 ajunge executing/prepared, dar nu devine done fără dovada explicită.
-Nu există încă simulator complet, I/O MODBUS sau test E2E cu frontend-ul.
+Simulatorul complet este descris în [SIMULATOR.md](SIMULATOR.md).
+I/O MODBUS și testul E2E cu frontend-ul urmează.
 
 ## Erori
 
@@ -108,5 +118,7 @@ server TCP sau hardware. Verifică rutele, erorile, aliasurile JSON,
 replay-ul, paginarea, startup/shutdown, worker-ul și restartul aplicației.
 Un test scrie în DB din alt thread în timpul construirii snapshot-ului
 și confirmă că rezultatul rămâne în tranzacția de citire inițială.
-Fluxul HTTP intrare/plată/ieșire folosește dovezi DTO explicite la limita
-adaptorului; nu revendică simulare fizică.
+Testele pasului 4 păstrează dovezi DTO injectate la limita adaptorului.
+Suita pasului 5 adaugă un flux HTTP complet cu worker și simulator real,
+fără injecții de telemetrie sau dovezi, plus replay după restart. Niciunul
+nu revendică validare fizică pe STM32.

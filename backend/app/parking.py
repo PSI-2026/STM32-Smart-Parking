@@ -53,6 +53,7 @@ class ParkingService:
         self.db, self.mode, self.hourly_rate_bani = database, mode, hourly_rate_bani
         self.clock_ms = clock_ms or (lambda: time.time_ns() // 1_000_000)
         self.monotonic_ms = monotonic_ms or (lambda: time.monotonic_ns() // 1_000_000)
+        self.simulation_handler = None
         with self.db.transaction() as connection:
             stored = connection.execute("SELECT value FROM metadata WHERE key='mode'").fetchone()
             if stored and stored[0] != mode:
@@ -207,6 +208,8 @@ class ParkingService:
                     self._prepare_access(connection, row, action)
                 elif self.mode == "hardware":
                     raise BusinessFault("SIMULATION_ONLY", "Acțiunea este rezervată simulării.")
+                elif self.simulation_handler is not None:
+                    self.simulation_handler(connection, row, action)
                 else:
                     raise NotImplementedError("Demo actions are delegated to the simulator in step 5")
             except BusinessFault as failure:
@@ -487,6 +490,35 @@ class ParkingService:
             connection.execute("UPDATE telemetry_history SET continuity=0")
             return len(rows) + len(prepared)
 
+    def account_departure(self, command_id, slot_id, telemetry):
+        """Correlated simulator exit; an unrelated held claim is not consumed."""
+        if self.mode != "simulation":
+            raise BusinessFault("SIMULATION_ONLY", "Eliberarea simulată nu este permisă în hardware.")
+        TypeAdapter(SlotId).validate_python(slot_id, strict=True)
+        telemetry = DeviceTelemetry.model_validate(telemetry.model_dump(by_alias=True))
+        with self.db.transaction() as connection:
+            command = self._command(connection, command_id)
+            self._ensure_session_reconciled(connection, command["session_id"])
+            session = self._session_row(connection, command["session_id"])
+            if (json.loads(command["action_json"])["type"] != "exit" or command["status"] != "done"
+                    or session["status"] != "completed" or session["slot_id"] != slot_id
+                    or not connection.execute("SELECT 1 FROM evidence WHERE command_id=? AND kind='passage'", (command_id,)).fetchone()):
+                raise BusinessFault("SESSION_CONFLICT", "Eliberarea nu are o ieșire confirmată asociată.")
+            if connection.execute("SELECT 1 FROM events WHERE command_id=? AND code='DEPARTURE_ACCOUNTED'", (command_id,)).fetchone():
+                return False
+            old = self._current_telemetry(connection)
+            observed_at = self.monotonic_ms()
+            candidate = normalize_telemetry(connection, telemetry, runtime_id=self.db.runtime_id, now_ms=observed_at)
+            candidate = self._store_telemetry(connection, candidate, observed_at=observed_at)
+            if old is None or any(slot.quality != "valid" for slot in [*old.slots, *candidate.slots]):
+                raise BusinessFault("DATA_UNAVAILABLE", "Eliberarea necesită senzori valizi.")
+            before, after = {slot.id: slot for slot in old.slots}, {slot.id: slot for slot in candidate.slots}
+            if after[slot_id].occupied is not False or any(before[i].occupied != after[i].occupied for i in before if i != slot_id):
+                raise BusinessFault("SESSION_CONFLICT", "Eliberarea modifică alte locuri sau nu confirmă locul liber.")
+            self._event(connection, "DEPARTURE_ACCOUNTED", "Senzorul simulat confirmă locul liber după ieșire.",
+                        command_id=command_id, session_id=session["id"])
+            return True
+
     def pending_commands(self):
         with self.db.transaction(write=False) as connection:
             return [row[0] for row in connection.execute("SELECT id FROM commands WHERE status='accepted' ORDER BY created_at,id")]
@@ -499,7 +531,7 @@ class ParkingService:
                     for identifier in ordered_ids) if ordered_ids is not None else connection.execute(
                         "SELECT id,action_json FROM commands WHERE status='accepted' ORDER BY created_at,id")
             for row in rows:
-                if row is not None and row["id"] not in excluded and (self.mode == "hardware" or json.loads(row["action_json"])["type"] in ("enter", "pay", "exit")):
+                if row is not None and row["id"] not in excluded and (self.mode == "hardware" or self.simulation_handler is not None or json.loads(row["action_json"])["type"] in ("enter", "pay", "exit")):
                     commands.append(row["id"])
                     if len(commands) == limit:
                         break
@@ -509,6 +541,9 @@ class ParkingService:
         """One SQLite read snapshot and one valuation time for all business data."""
         with self.db.transaction(write=False) as connection:
             telemetry = self._current_telemetry(connection) or unknown_telemetry()
+            selected_transport = connection.execute("SELECT value FROM metadata WHERE key='simulation_transport'").fetchone()
+            if self.mode == "simulation" and selected_transport:
+                transport = selected_transport[0]
             now = self.clock_ms()
             sessions = [self._session(connection, row, at=now) for row in connection.execute(
                 "SELECT * FROM sessions WHERE status NOT IN ('completed','cancelled') ORDER BY created_at DESC,id DESC")]

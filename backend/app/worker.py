@@ -34,11 +34,14 @@ def process_batch(service, retry_after=None, should_stop=lambda: False, *, clock
             retry_after.pop(command_id, None)
 
 
-async def business_worker(service, stop: asyncio.Event, interval: float):
+async def business_worker(service, stop: asyncio.Event, interval: float, simulator=None):
     retry_after = {}
     while not stop.is_set():
         try:
-            await run_in_threadpool(process_batch, service, retry_after, stop.is_set)
+            if simulator is None:
+                await run_in_threadpool(process_batch, service, retry_after, stop.is_set)
+            else:
+                await run_in_threadpool(simulator.cycle, retry_after, stop.is_set)
         except Exception:
             logger.exception("Business queue unavailable")
         try:

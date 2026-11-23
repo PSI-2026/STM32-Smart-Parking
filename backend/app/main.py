@@ -16,6 +16,7 @@ from .contracts.api import ApiError, CommandRequest, CommandResult, EventPage, H
 from .parking import BusinessFault, ParkingService
 from .settings import Settings
 from .storage import Database
+from .simulator import SimulatorRuntime
 from .worker import business_worker
 
 logger = logging.getLogger(__name__)
@@ -38,8 +39,14 @@ def create_app(settings: Settings | None = None, *, service: ParkingService | No
             Database(settings.database_path), mode=settings.mode, hourly_rate_bani=settings.hourly_rate_bani))
         await run_in_threadpool(active.recover)
         application.state.parking = active
+        simulator = None
+        if settings.mode == "simulation" and settings.simulator_enabled:
+            simulator = SimulatorRuntime(active, step_delay_ms=settings.simulator_step_delay_ms,
+                                         auto_passage=settings.simulator_auto_passage, transport=settings.transport)
+            await run_in_threadpool(simulator.connect)
+        application.state.simulator = simulator
         stop = asyncio.Event()
-        task = asyncio.create_task(business_worker(active, stop, settings.worker_interval_seconds)) if settings.worker_enabled else None
+        task = asyncio.create_task(business_worker(active, stop, settings.worker_interval_seconds, simulator)) if settings.worker_enabled else None
         application.state.worker_task = task
         try:
             yield
@@ -47,6 +54,9 @@ def create_app(settings: Settings | None = None, *, service: ParkingService | No
             stop.set()
             if task:
                 await task
+            if simulator:
+                active.simulation_handler = None
+                await simulator.adapter.close()
 
     application = FastAPI(title="STM32 Smart Parking API", description="Persistent parking API; simulated payments.",
                           version="0.1.0", lifespan=lifespan)

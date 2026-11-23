@@ -16,3 +16,6 @@ class Settings(BaseSettings):
     hourly_rate_bani: int = Field(default=500, ge=0, le=1_000_000_000)
     worker_enabled: bool = True
     worker_interval_seconds: float = Field(default=0.1, ge=0.05, le=5)
+    simulator_enabled: bool = True
+    simulator_step_delay_ms: int = Field(default=200, ge=50, le=10000)
+    simulator_auto_passage: bool = True

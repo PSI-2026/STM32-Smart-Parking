@@ -187,7 +187,7 @@ class ContractTests(unittest.TestCase):
 
     def test_existing_health_and_runtime_spec_remain_compatible(self):
         with tempfile.TemporaryDirectory() as directory, TestClient(create_app(Settings(
-            database_path=Path(directory) / "parking.sqlite3", worker_enabled=False))) as client:
+            database_path=Path(directory) / "parking.sqlite3", worker_enabled=False, simulator_enabled=False))) as client:
             response = client.get("/api/v1/health")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json(), {"status": "healthy", "service": "smart-parking-backend", "version": "0.1.0"})

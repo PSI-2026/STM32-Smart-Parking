@@ -498,7 +498,7 @@ class ParkingTests(unittest.TestCase):
         service = ParkingService(Database(path))
         self.assertEqual(service.get_command("old").status, "accepted")
         with service.db.transaction(write=False) as connection:
-            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 2)
+            self.assertEqual(connection.execute("PRAGMA user_version").fetchone()[0], 3)
             self.assertEqual(connection.execute("PRAGMA foreign_key_check").fetchall(), [])
 
     def test_entry_contradiction_blocks_an_already_prepared_exit_dispatch(self):

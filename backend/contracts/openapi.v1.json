@@ -3,7 +3,7 @@
   "info": {
     "title": "Smart Parking target API",
     "version": "1.0.0",
-    "description": "HTTP API implemented in step 4. Device I/O and the simulator are integrated in subsequent steps."
+    "description": "HTTP API with persistent simulator. Physical device I/O is integrated separately."
   },
   "servers": [
     {

@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import json
 from pathlib import Path
 import sqlite3
+import threading
 from uuid import uuid4
 
 
@@ -61,6 +62,14 @@ MIGRATION_2 = [
         continuity INTEGER NOT NULL CHECK(continuity IN (0,1,2)), payload_json TEXT NOT NULL)""",
 ]
 
+MIGRATION_3 = [
+    "CREATE TABLE simulator_state (id INTEGER PRIMARY KEY CHECK(id=1), payload_json TEXT NOT NULL)",
+    """CREATE TABLE simulator_commands (
+        node_id TEXT NOT NULL, boot_epoch INTEGER NOT NULL, device_id INTEGER NOT NULL,
+        command_json TEXT NOT NULL, phase TEXT NOT NULL, deadline_ms INTEGER NOT NULL,
+        passage_json TEXT, api_command_id TEXT REFERENCES commands(id), PRIMARY KEY(node_id,boot_epoch,device_id))""",
+]
+
 
 class Database:
     def __init__(self, path: str | Path):
@@ -69,6 +78,7 @@ class Database:
         self.path = Path(path).resolve()
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.runtime_id = uuid4().hex
+        self._local = threading.local()
         connection = self.connect()
         try:
             connection.execute("PRAGMA journal_mode=WAL")
@@ -92,8 +102,13 @@ class Database:
                         if row["progress_seen"]:
                             connection.execute("UPDATE metadata SET value='1' WHERE key='reconciliation_required'")
                 connection.execute("PRAGMA user_version=2")
-            elif version != 2:
-                raise RuntimeError(f"Unsupported database schema {version}; expected 2")
+                version = 2
+            if version == 2:
+                for statement in MIGRATION_3:
+                    connection.execute(statement)
+                connection.execute("PRAGMA user_version=3")
+            elif version != 3:
+                raise RuntimeError(f"Unsupported database schema {version}; expected 3")
 
     def connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=5, isolation_level=None)
@@ -105,13 +120,29 @@ class Database:
 
     @contextmanager
     def transaction(self, *, write: bool = True):
+        active = getattr(self._local, "connection", None)
+        if active is not None:
+            if write and not self._local.write:
+                raise RuntimeError("Cannot upgrade a read-only unit of work")
+            savepoint = "nested_" + uuid4().hex
+            active.execute(f"SAVEPOINT {savepoint}")
+            try:
+                yield active
+                active.execute(f"RELEASE {savepoint}")
+            except BaseException:
+                active.execute(f"ROLLBACK TO {savepoint}")
+                active.execute(f"RELEASE {savepoint}")
+                raise
+            return
         connection = self.connect()
         try:
             connection.execute("BEGIN IMMEDIATE" if write else "BEGIN")
+            self._local.connection, self._local.write = connection, write
             yield connection
             connection.commit()
         except BaseException:
             connection.rollback()
             raise
         finally:
+            self._local.connection = None
             connection.close()
