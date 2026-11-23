@@ -168,10 +168,32 @@ static void response_capacity_test(void)
         }
         assert(g.state == GATE_CLOSED);
     }
-    /* A too-small acknowledgement buffer must not actuate the gate either. */
+    /* An undersized acknowledgement must not stage a valid occupancy mask. */
     HybridParking p;
     SharedGate g;
     ModbusSlave s;
+    HybridParking_Init(&p, true);
+    SharedGate_Init(&g, GATE_SIMULATION);
+    ModbusSlave_Init(&s, 1U, &p, &g);
+    s.sim_occupied = 0x0002U;
+    /* Bit zero belongs to physical P01: setting it would be rejected even
+     * without the response-capacity guard and would not exercise mutation. */
+    uint8_t simulation_req[8] = {1U, 6U, 1U, 2U, 0U, 0x0cU, 0U, 0U};
+    for (size_t capacity = 0U; capacity < 8U; ++capacity) {
+        uint8_t guarded[10];
+        memset(guarded, 0xa5, sizeof guarded);
+        assert(ModbusSlave_Process(&s, simulation_req,
+            frame(simulation_req, 6U), guarded + 1U, capacity, 1U) == 0U);
+        assert(s.sim_occupied == 0x0002U);
+        assert(HybridParking_OccupiedMask(&p) == 0U);
+        for (size_t i = 0U; i < sizeof guarded; ++i)
+            assert(guarded[i] == 0xa5U);
+    }
+    uint8_t full_reply[8];
+    assert(ModbusSlave_Process(&s, simulation_req, frame(simulation_req, 6U),
+        full_reply, sizeof full_reply, 1U) == 8U);
+    assert(s.sim_occupied == 0x000cU);
+    /* A too-small acknowledgement buffer must not actuate the gate either. */
     HybridParking_Init(&p, true);
     SharedGate_Init(&g, GATE_SIMULATION);
     ModbusSlave_Init(&s, 1U, &p, &g);
@@ -213,6 +235,24 @@ static void rtu_framing_test(void)
     assert(memcmp(output, ours, 8U) == 0);
     assert(ModbusRtuRx_Pop(&rx, output, sizeof output, last + 1750U) == 0U);
 
+    /* The exact t1.5 boundary is accepted; only a longer sub-t3.5 gap
+     * invalidates the frame. */
+    const uint8_t boundary_frame[4] = {1U, 3U, 0U, 0U};
+    ModbusRtuRx_Init(&rx, 1000000U);
+    for (uint32_t i = 0U; i < sizeof boundary_frame; ++i)
+        ModbusRtuRx_Push(&rx, boundary_frame[i], i * 750U);
+    last = (uint32_t)(sizeof boundary_frame - 1U) * 750U;
+    assert(ModbusRtuRx_Pop(&rx, output, sizeof output, last + 1749U) == 0U);
+    assert(ModbusRtuRx_Pop(&rx, output, sizeof output, last + 1750U) == 4U);
+    assert(memcmp(output, boundary_frame, sizeof boundary_frame) == 0);
+
+    /* Empty and undersized inputs are not publishable MODBUS RTU frames. */
+    ModbusRtuRx_Init(&rx, 1000000U);
+    assert(ModbusRtuRx_Pop(&rx, output, sizeof output, 1750U) == 0U);
+    const uint8_t undersized_frame[3] = {1U, 3U, 0U};
+    last = receive_frame(&rx, undersized_frame, sizeof undersized_frame, 0U);
+    assert(ModbusRtuRx_Pop(&rx, output, sizeof output, last + 1750U) == 0U);
+
     ModbusRtuRx_Init(&rx, 1000000U);
     last = receive_frame(&rx, other, sizeof other, 0U);
     last = receive_frame(&rx, ours, sizeof ours, last + 1750U);
@@ -248,6 +288,17 @@ static void rtu_framing_test(void)
     assert(ModbusRtuRx_Pop(&rx, output, sizeof output, 17500U + 43749U) == 0U);
     assert(ModbusRtuRx_Pop(&rx, output, sizeof output, 17500U + 43750U) == 8U);
 
+    /* A maximum-size MODBUS ADU fits exactly; overflow recovery is tested
+     * below with one byte beyond this boundary. */
+    uint8_t maximum_frame[MODBUS_MAX_ADU];
+    for (size_t i = 0U; i < sizeof maximum_frame; ++i)
+        maximum_frame[i] = (uint8_t)i;
+    ModbusRtuRx_Init(&rx, 1000000U);
+    last = receive_frame(&rx, maximum_frame, sizeof maximum_frame, 0U);
+    assert(ModbusRtuRx_Pop(&rx, output, sizeof output, last + 1750U) ==
+           sizeof maximum_frame);
+    assert(memcmp(output, maximum_frame, sizeof maximum_frame) == 0);
+
     /* Queue saturation drops whole frames, never concatenates their bytes. */
     ModbusRtuRx_Init(&rx, 1000000U);
     last = 0U;
@@ -262,6 +313,20 @@ static void rtu_framing_test(void)
     assert(ModbusRtuRx_Pop(&rx, output, sizeof output, last + 1750U) == 8U);
     assert(output[0] == MODBUS_RTU_QUEUE_DEPTH + 2U);
     assert(ModbusRtuRx_Pop(&rx, output, sizeof output, last + 1750U) == 0U);
+
+    /* Destination capacity is checked against the queued frame, not the
+     * shorter frame currently being collected. The queued frame must remain
+     * available after a rejected pop. */
+    ModbusRtuRx_Init(&rx, 1000000U);
+    last = receive_frame(&rx, ours, sizeof ours, 0U);
+    ModbusRtuRx_Push(&rx, 0xAAU, last + 1750U);
+    ModbusRtuRx_Push(&rx, 0xBBU, last + 1850U);
+    uint8_t guarded[10];
+    memset(guarded, 0xA5, sizeof guarded);
+    assert(ModbusRtuRx_Pop(&rx, guarded + 1U, 2U, last + 1850U) == 0U);
+    assert(guarded[0] == 0xA5U && guarded[3] == 0xA5U);
+    assert(ModbusRtuRx_Pop(&rx, output, sizeof output, last + 1850U) == 8U);
+    assert(memcmp(output, ours, 8U) == 0);
 }
 int main(void)
 {
