@@ -14,11 +14,12 @@ all three targets. `make -C firmware/tests check` runs them locally in order.
 `CC` and `CFLAGS` can be overridden as normal Make variables.
 
 The analysis target excludes only CubeMX-generated `Core/Inc/main.h`, whose
-`__MAIN_H` guard triggers `bugprone-reserved-identifier`, and lines 7–8 of
-`vehicle_detector.c`, where the existing `VehicleDetector_Init` signature
-triggers `bugprone-easily-swappable-parameters`. The latter API is retained to
-keep this PR limited to test infrastructure. The full check families remain
-enabled for every other production line, and new diagnostics fail the target.
+`__MAIN_H` guard triggers `bugprone-reserved-identifier`. The existing public
+`VehicleDetector_Init` signature triggers
+`bugprone-easily-swappable-parameters`; a check-specific `NOLINTBEGIN` /
+`NOLINTEND` pair wraps only that declaration in `vehicle_detector.c`. No source
+lines are filtered, so other enabled diagnostics on those lines remain active.
+The function signature and behavior are unchanged.
 
 The mocks enforce explicit sensor input setup and record GPIO reads and writes.
 They use the GPIO symbols and pin mappings from the production `main.h`.

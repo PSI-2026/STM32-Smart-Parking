@@ -22,12 +22,9 @@ analyze:
 	if [ ! -x "$$tidy" ]; then echo 'clang-tidy is unavailable' >&2; exit 1; fi; \
 	for source in $(APP)/Src/vehicle_detector.c $(APP)/Src/parking_spot.c $(APP)/Src/parking_manager.c $(APP)/Src/barrier_controller.c; do \
 	  set --; \
-	  if [ "$$source" = "$(APP)/Src/vehicle_detector.c" ]; then \
-	    set -- --line-filter='[{"name":"vehicle_detector.c","lines":[[1,3],[11,999999]]},{"name":"vehicle_detector.h","lines":[[1,999999]]}]'; \
-	  fi; \
 	  "$$tidy" "$$source" -quiet -checks='-*,clang-analyzer-*,bugprone-*' \
 	    --warnings-as-errors='*' --header-filter='.*' \
-	    --exclude-header-filter='(^|/)Core/Inc/main\.h$$' "$$@" -- $(STRICT) $(INCLUDES); \
+	    --exclude-header-filter='(^|/)Core/Inc/main\.h$$' -- $(STRICT) $(INCLUDES); \
 	done
 
 check: test sanitize analyze
