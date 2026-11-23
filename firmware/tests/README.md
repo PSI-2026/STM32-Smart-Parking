@@ -24,6 +24,10 @@ The function signature and behavior are unchanged.
 The mocks enforce explicit sensor input setup and record GPIO reads and writes.
 They use the GPIO symbols and pin mappings from the production `main.h`.
 
+The hybrid suite also verifies that RTU dequeue checks the caller's capacity
+against the queued frame length, even while a shorter subsequent frame is
+being collected, and that a rejected dequeue preserves the queued frame.
+
 These host tests do not compile generated `main.c`, validate GPIO wiring,
 interrupt timing, ARM builds, real sensor fault detection, or physical servo
 control. A reported fault freezes the barrier's logical position. Gate motion,
