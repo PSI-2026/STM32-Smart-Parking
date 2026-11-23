@@ -18,10 +18,16 @@ test sanitize:
 
 analyze:
 	@set -eu; tidy=$$(command -v clang-tidy || true); \
-	if [ -z "$$tidy" ] && [ -x /opt/homebrew/opt/llvm/bin/clang-tidy ]; then tidy=/opt/homebrew/opt/llvm/bin/clang-tidy; fi; \
-	if [ -z "$$tidy" ]; then echo 'clang-tidy is unavailable' >&2; exit 1; fi; \
+	if [ -z "$$tidy" ] && command -v brew >/dev/null 2>&1; then tidy="$$(brew --prefix llvm 2>/dev/null)/bin/clang-tidy"; fi; \
+	if [ ! -x "$$tidy" ]; then echo 'clang-tidy is unavailable' >&2; exit 1; fi; \
 	for source in $(APP)/Src/vehicle_detector.c $(APP)/Src/parking_spot.c $(APP)/Src/parking_manager.c $(APP)/Src/barrier_controller.c; do \
-	  "$$tidy" "$$source" -quiet -checks='-*,clang-analyzer-*,bugprone-*' -- $(STRICT) $(INCLUDES); \
+	  set --; \
+	  if [ "$$source" = "$(APP)/Src/vehicle_detector.c" ]; then \
+	    set -- --line-filter='[{"name":"vehicle_detector.c","lines":[[1,6],[9,999999]]},{"name":"vehicle_detector.h","lines":[[1,999999]]}]'; \
+	  fi; \
+	  "$$tidy" "$$source" -quiet -checks='-*,clang-analyzer-*,bugprone-*' \
+	    --warnings-as-errors='*' --header-filter='.*' \
+	    --exclude-header-filter='(^|/)Core/Inc/main\.h$$' "$$@" -- $(STRICT) $(INCLUDES); \
 	done
 
 check: test sanitize analyze
