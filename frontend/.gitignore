@@ -1,0 +1,5 @@
+.npm-cache/
+.sites-runtime/
+*.local
+test-results/
+playwright-report/

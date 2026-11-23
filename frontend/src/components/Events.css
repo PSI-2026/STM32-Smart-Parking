@@ -1,0 +1,49 @@
+.events-panel > .panel-heading { flex-wrap: wrap; padding: 16px 18px; }
+.events-panel > .panel-heading p { font-size: 11px; }
+.journal-heading-copy { flex: 1; min-width: 0; }
+.journal-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0 18px 12px; }
+.journal-level-filter { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+.journal-level-filter select { width: 160px; min-height: 35px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 5px; font-size: 11px; }
+.events-panel .journal-search { flex: 1; width: auto; max-width: 350px; }
+.journal-list, .journal-command-list { list-style: none; margin: 0; padding: 0; }
+.journal-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: start; gap: 10px; padding: 10px 18px; border-top: 1px solid var(--line); }
+.journal-row:hover { background: #f8fafd; }
+.journal-level { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 5px; }
+.journal-level.info { color: #527a9d; background: #eaf1f8; }
+.journal-level.success { color: #52733c; background: #eaf2df; }
+.journal-level.warning { color: #966b26; background: #fbf0da; }
+.journal-message { align-self: center; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.journal-time { align-self: center; font-size: 10px; line-height: 1.6; white-space: nowrap; color: var(--muted); }
+.journal-empty { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 24px 18px; border-top: 1px solid var(--line); text-align: center; color: var(--muted); }
+.journal-empty strong { font-size: 12px; color: var(--text); }
+.journal-empty p { font-size: 11px; line-height: 1.6; }
+.journal-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 18px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+.journal-page-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.journal-commands { border-top: 1px solid var(--line); }
+.journal-commands summary { padding: 12px 18px; cursor: pointer; font-size: 12px; font-weight: 550; }
+.journal-commands summary::marker { color: var(--muted); }
+.journal-commands summary:focus-visible { outline: 2px solid #6d97bd; outline-offset: -4px; }
+.journal-commands .number-pill { margin-left: 6px; }
+.journal-command-list li { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: start; gap: 12px; padding: 10px 18px; border-top: 1px solid var(--line); }
+.journal-command-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.journal-command-heading code { font-size: 10px; color: var(--muted); }
+.journal-command-list p { font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.journal-command-status { padding: 4px 6px; border-radius: 4px; font-size: 10px; }
+.journal-command-status.done { color: #52733c; background: #eaf2df; }
+.journal-command-status.rejected { color: var(--occupied-text); background: var(--occupied-surface); }
+.journal-command-status.accepted, .journal-command-status.executing { color: var(--primary); background: var(--accent-soft); }
+.journal-command-status.unknown { color: var(--unknown-text); background: var(--unknown-surface); }
+
+@media (max-width: 740px) {
+  .events-panel > .panel-heading { padding: 15px; }
+  .journal-toolbar { flex-direction: column; align-items: stretch; gap: 10px; padding: 0 15px 12px; }
+  .journal-level-filter select { flex: 1; width: auto; min-width: 0; min-height: 40px; }
+  .events-panel .journal-search { flex: auto; width: 100%; max-width: none; }
+  .journal-row { grid-template-columns: 22px minmax(0, 1fr); gap: 3px 9px; padding: 10px 15px; }
+  .journal-level { grid-row: span 2; }
+  .journal-time { grid-column: 2; }
+  .journal-empty { padding-inline: 15px; }
+  .journal-footer, .journal-commands summary { padding: 12px 15px; }
+  .journal-commands summary { min-height: 44px; }
+  .journal-command-list li { grid-template-columns: minmax(0, 1fr); gap: 7px; padding: 10px 15px; }
+}

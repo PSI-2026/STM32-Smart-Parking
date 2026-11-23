@@ -1,0 +1,481 @@
+{
+  "scenarios": [
+    {
+      "name": "timeout-then-matching-record",
+      "request": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "operation": "open",
+        "ttlMs": 2000,
+        "authorization": "payment",
+        "expectedBootEpoch": 7
+      },
+      "observation": {
+        "nodeId": "S4",
+        "bootEpoch": 7,
+        "record": {
+          "nodeId": "S4",
+          "commandId": 1,
+          "bootEpoch": 7,
+          "status": "accepted",
+          "resultCode": 0,
+          "commandBlock": [
+            0,
+            1,
+            1,
+            2000,
+            2,
+            0,
+            7,
+            0,
+            0
+          ],
+          "evidence": "coherent-record",
+          "reason": "matched"
+        }
+      },
+      "adapterResult": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "status": "accepted",
+        "resultCode": 0,
+        "commandBlock": [
+          0,
+          1,
+          1,
+          2000,
+          2,
+          0,
+          7,
+          0,
+          0
+        ],
+        "evidence": "coherent-record",
+        "reason": "matched"
+      },
+      "passage": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "state": "unavailable",
+        "source": "none",
+        "evidenceId": null,
+        "occurredAt": null,
+        "commandBlock": null
+      },
+      "applicationStatus": "executing",
+      "rule": "No resend; acceptance is not passage."
+    },
+    {
+      "name": "B-refused-after-A",
+      "request": {
+        "nodeId": "S4",
+        "commandId": 2,
+        "operation": "open",
+        "ttlMs": 2000,
+        "authorization": "payment",
+        "expectedBootEpoch": 7
+      },
+      "observation": {
+        "nodeId": "S4",
+        "bootEpoch": 7,
+        "record": {
+          "nodeId": "S4",
+          "commandId": 2,
+          "bootEpoch": 7,
+          "status": "rejected",
+          "resultCode": 2,
+          "commandBlock": [
+            0,
+            2,
+            1,
+            2000,
+            2,
+            0,
+            7,
+            0,
+            0
+          ],
+          "evidence": "coherent-record",
+          "reason": "matched"
+        }
+      },
+      "adapterResult": {
+        "nodeId": "S4",
+        "commandId": 2,
+        "bootEpoch": 7,
+        "status": "rejected",
+        "resultCode": 2,
+        "commandBlock": [
+          0,
+          2,
+          1,
+          2000,
+          2,
+          0,
+          7,
+          0,
+          0
+        ],
+        "evidence": "coherent-record",
+        "reason": "matched"
+      },
+      "passage": {
+        "nodeId": "S4",
+        "commandId": 2,
+        "bootEpoch": 7,
+        "state": "unavailable",
+        "source": "none",
+        "evidenceId": null,
+        "occurredAt": null,
+        "commandBlock": null
+      },
+      "applicationStatus": "rejected",
+      "rule": "B is explicitly identified even though never accepted."
+    },
+    {
+      "name": "A-evicted-by-B",
+      "request": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "operation": "open",
+        "ttlMs": 2000,
+        "authorization": "payment",
+        "expectedBootEpoch": 7
+      },
+      "observation": {
+        "nodeId": "S4",
+        "bootEpoch": 7,
+        "record": {
+          "nodeId": "S4",
+          "commandId": 2,
+          "bootEpoch": 7,
+          "status": "rejected",
+          "resultCode": 2,
+          "commandBlock": [
+            0,
+            2,
+            1,
+            2000,
+            2,
+            0,
+            7,
+            0,
+            0
+          ],
+          "evidence": "coherent-record",
+          "reason": "matched"
+        }
+      },
+      "adapterResult": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "status": "unknown",
+        "resultCode": null,
+        "commandBlock": null,
+        "evidence": "unproven",
+        "reason": "record-mismatch"
+      },
+      "passage": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "state": "unavailable",
+        "source": "none",
+        "evidenceId": null,
+        "occurredAt": null,
+        "commandBlock": null
+      },
+      "applicationStatus": "unknown",
+      "rule": "B refusal must not be attributed to A."
+    },
+    {
+      "name": "MCU-restart",
+      "request": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "operation": "open",
+        "ttlMs": 2000,
+        "authorization": "payment",
+        "expectedBootEpoch": 7
+      },
+      "observation": {
+        "nodeId": "S4",
+        "bootEpoch": 8,
+        "record": null
+      },
+      "adapterResult": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "status": "unknown",
+        "resultCode": null,
+        "commandBlock": null,
+        "evidence": "unproven",
+        "reason": "boot-changed"
+      },
+      "passage": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "state": "unavailable",
+        "source": "none",
+        "evidenceId": null,
+        "occurredAt": null,
+        "commandBlock": null
+      },
+      "applicationStatus": "unknown",
+      "rule": "Keep old application command and claims; never allocate new device ID to retry it."
+    },
+    {
+      "name": "record-unavailable-after-timeout",
+      "request": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "operation": "open",
+        "ttlMs": 2000,
+        "authorization": "payment",
+        "expectedBootEpoch": 7
+      },
+      "observation": null,
+      "adapterResult": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "status": "unknown",
+        "resultCode": null,
+        "commandBlock": null,
+        "evidence": "unproven",
+        "reason": "record-unavailable"
+      },
+      "passage": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "state": "unavailable",
+        "source": "none",
+        "evidenceId": null,
+        "occurredAt": null,
+        "commandBlock": null
+      },
+      "applicationStatus": "unknown",
+      "rule": "No blind replay."
+    },
+    {
+      "name": "device-done-without-passage",
+      "request": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "operation": "open",
+        "ttlMs": 2000,
+        "authorization": "payment",
+        "expectedBootEpoch": 7
+      },
+      "observation": {
+        "nodeId": "S4",
+        "bootEpoch": 7,
+        "record": {
+          "nodeId": "S4",
+          "commandId": 1,
+          "bootEpoch": 7,
+          "status": "done",
+          "resultCode": 1,
+          "commandBlock": [
+            0,
+            1,
+            1,
+            2000,
+            2,
+            0,
+            7,
+            0,
+            0
+          ],
+          "evidence": "coherent-record",
+          "reason": "matched"
+        }
+      },
+      "adapterResult": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "status": "done",
+        "resultCode": 1,
+        "commandBlock": [
+          0,
+          1,
+          1,
+          2000,
+          2,
+          0,
+          7,
+          0,
+          0
+        ],
+        "evidence": "coherent-record",
+        "reason": "matched"
+      },
+      "passage": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "state": "unavailable",
+        "source": "none",
+        "evidenceId": null,
+        "occurredAt": null,
+        "commandBlock": null
+      },
+      "applicationStatus": "unknown",
+      "rule": "Session remains pending_exit; capacity is not released."
+    },
+    {
+      "name": "same-ID-different-block",
+      "request": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "operation": "reset-fault",
+        "ttlMs": 0,
+        "authorization": "none",
+        "expectedBootEpoch": 7
+      },
+      "observation": {
+        "nodeId": "S4",
+        "bootEpoch": 7,
+        "record": {
+          "nodeId": "S4",
+          "commandId": 1,
+          "bootEpoch": 7,
+          "status": "done",
+          "resultCode": 1,
+          "commandBlock": [
+            0,
+            1,
+            1,
+            2000,
+            2,
+            0,
+            7,
+            0,
+            0
+          ],
+          "evidence": "coherent-record",
+          "reason": "matched"
+        }
+      },
+      "adapterResult": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "status": "unknown",
+        "resultCode": null,
+        "commandBlock": null,
+        "evidence": "unproven",
+        "reason": "record-mismatch"
+      },
+      "passage": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "state": "unavailable",
+        "source": "none",
+        "evidenceId": null,
+        "occurredAt": null,
+        "commandBlock": null
+      },
+      "applicationStatus": "unknown",
+      "rule": "An open result cannot prove a reset with the same ID."
+    },
+    {
+      "name": "original-open-after-conflicting-reset",
+      "request": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "operation": "open",
+        "ttlMs": 2000,
+        "authorization": "payment",
+        "expectedBootEpoch": 7
+      },
+      "observation": {
+        "nodeId": "S4",
+        "bootEpoch": 7,
+        "record": {
+          "nodeId": "S4",
+          "commandId": 1,
+          "bootEpoch": 7,
+          "status": "rejected",
+          "resultCode": 4,
+          "commandBlock": [
+            0,
+            1,
+            2,
+            0,
+            0,
+            0,
+            7,
+            0,
+            0
+          ],
+          "evidence": "coherent-record",
+          "reason": "matched"
+        }
+      },
+      "adapterResult": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "status": "unknown",
+        "resultCode": null,
+        "commandBlock": null,
+        "evidence": "unproven",
+        "reason": "record-mismatch"
+      },
+      "passage": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "state": "unavailable",
+        "source": "none",
+        "evidenceId": null,
+        "occurredAt": null,
+        "commandBlock": null
+      },
+      "applicationStatus": "unknown",
+      "rule": "Conflict rejection describes the reset block, not the original open."
+    },
+    {
+      "name": "explicit-simulated-exit",
+      "request": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "operation": "open",
+        "ttlMs": 2000,
+        "authorization": "payment",
+        "expectedBootEpoch": 7
+      },
+      "passage": {
+        "nodeId": "S4",
+        "commandId": 1,
+        "bootEpoch": 7,
+        "state": "confirmed",
+        "source": "simulation",
+        "evidenceId": "sim-passage-1",
+        "occurredAt": 1795420800500,
+        "commandBlock": [
+          0,
+          1,
+          1,
+          2000,
+          2,
+          0,
+          7,
+          0,
+          0
+        ]
+      },
+      "applicationStatus": "done",
+      "rule": "After checking identity and persisting the unique passage event, complete the session. Slot occupancy still comes from its sensor."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "commandId": "demo-entry-001",
+  "action": {
+    "type": "enter",
+    "plate": "B 101 DEM"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "sampleSequence": 42,
+  "observation": {
+    "sampleAgeMs": 1900,
+    "roundTripMs": 50,
+    "elapsedSinceResponseMs": 100,
+    "elapsedSinceSequenceFirstSeenMs": 150,
+    "firstEstimatedAgeMs": 1900
+  },
+  "effectiveAgeMs": 2050,
+  "staleAfterMs": 2000,
+  "adapterQuality": "stale",
+  "occupied": null,
+  "barrierState": "UNKNOWN",
+  "rule": "Successful FC04 is not a new acquisition. Both API and adapter reject quality=valid at age >= 2000 ms."
+}

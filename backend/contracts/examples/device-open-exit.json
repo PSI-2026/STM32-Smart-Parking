@@ -1,0 +1,21 @@
+{
+  "command": {
+    "nodeId": "S4",
+    "commandId": 1,
+    "operation": "open",
+    "ttlMs": 2000,
+    "authorization": "payment",
+    "expectedBootEpoch": 7
+  },
+  "registers": [
+    0,
+    1,
+    1,
+    2000,
+    2,
+    0,
+    7,
+    0,
+    0
+  ]
+}
