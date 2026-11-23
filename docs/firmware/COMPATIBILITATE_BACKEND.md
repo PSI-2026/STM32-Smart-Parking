@@ -6,6 +6,13 @@ Această matrice compară firmware-ul MODBUS RTU v1.0 din `origin/main` la
 backend; niciun fișier din PR #9 nu a fost modificat. Contractul v2.1 este
 țintă software, nu dovadă de suport sau validare pe placa STM32.
 
+**Notă privind versiunile analizate:** Commit-ul `792d8bc`, menționat în planul
+inițial, reprezintă starea repository-ului înainte de integrarea PR #7 și PR #8.
+Matricea de mai jos folosește intenționat commit-ul `6acd3b1`, starea firmware-ului
+după integrarea PR #8, care include implementarea MODBUS RTU v1.0 analizată aici.
+Cele două commit-uri descriu etape diferite ale dezvoltării; comparația rămâne
+ancorată la `6acd3b1` și nu este contradictorie cu referința istorică `792d8bc`.
+
 | Domeniu | Firmware v1.0 implementat | Backend v2.1 vizat | Compatibilitate |
 |---|---|---|---|
 | Topologie | Un STM32, ID implicit 1; poate fi construit cu alt ID. P01 este intrarea fizică, P02–P04 sunt valori primite de la backend. O singură poartă logică partajată. | Gateway G (247), stații S1–S5 (1–5); S1/S2 raportează parcarea, S3/S4 sunt bariere separate, S5 identitate de nod. | Incompatibilă: un nod cu o poartă nu reprezintă cele șase roluri distribuite. |
