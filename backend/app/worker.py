@@ -1,4 +1,4 @@
-"""Business queue only; adapters and physical dispatch are added in later steps."""
+"""Business queue and simulator loop; physical dispatch lives in hardware.py."""
 
 import asyncio
 import logging

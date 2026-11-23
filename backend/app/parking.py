@@ -15,6 +15,7 @@ from .contracts.api import (
 from .contracts.firmware import DeviceCommand, DeviceCommandResult, DeviceTelemetry, PassageEvidence, passage_matches
 from .storage import Database
 from .telemetry import age_telemetry, normalize_telemetry, unknown_telemetry
+from .observations import boot_floors, remember_boot
 
 
 def canonical(value) -> str:
@@ -44,6 +45,13 @@ def tariff_bani(entered_at: int, at: int, hourly_rate_bani: int) -> int:
 
 
 class ParkingService:
+    def record_boot_observation(self, node, boot):
+        from .contracts.firmware import NODE_IDS
+        if node not in NODE_IDS or type(boot) is not int or not 0 <= boot <= 0xFFFFFFFF:
+            raise ValueError("Invalid device identity")
+        with self.db.transaction() as connection:
+            remember_boot(connection, node, boot)
+
     def __init__(self, database: Database, *, mode="simulation", hourly_rate_bani=500,
                  clock_ms=None, monotonic_ms=None):
         if mode not in ("simulation", "hardware"):
@@ -126,7 +134,14 @@ class ParkingService:
         elapsed = self.monotonic_ms() - row["received_mono_ms"]
         if elapsed < 0:
             return None
-        return age_telemetry(json.loads(row["payload_json"]), elapsed)
+        data = json.loads(row["payload_json"])
+        floors = boot_floors(connection)
+        for station in data["stations"]:
+            if station["bootEpoch"] is not None and station["bootEpoch"] < floors.get(station["id"], 0):
+                station.update(quality="unknown", online=False)
+        # Apply the normal path invalidation before this cache is consumed by
+        # snapshots, capacity, preparation or dispatch in the same transaction.
+        return age_telemetry(data, elapsed)
 
     def get_telemetry(self):
         with self.db.transaction(write=False) as connection:
@@ -329,6 +344,11 @@ class ParkingService:
                 raise BusinessFault("SESSION_CONFLICT", "Ecoul comenzii nu corespunde.")
             if self.mode == "hardware" and result.evidence == "simulation":
                 raise BusinessFault("SIMULATION_ONLY", "Rezultat de simulator în modul hardware.")
+            if self.mode == "hardware" and result.status != "unknown":
+                # Durable boot floor checked atomically with every result effect.
+                if result.boot_epoch < boot_floors(connection).get(device.node_id, 0):
+                    from .contracts.firmware import result_for
+                    result = result_for(device, None)
             progress = result.status in ("accepted", "executing", "done", "failed", "expired")
             refused = result.status == "rejected"
             contradiction = binding["contradiction"] or (refused and binding["progress_seen"]) or (progress and binding["refusal_seen"])

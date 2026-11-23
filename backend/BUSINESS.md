@@ -183,9 +183,20 @@ zero este același eșantion, restul este regresie/ambiguitate. Un payload
 schimbat pentru aceeași identitate sau un boot mai vechi este refuzat;
 valoarea primită devine unknown fără a înlocui identitatea maximă păstrată.
 Wrap-ul numeric este admis numai cu continuitate demonstrată și eșantion
-precedent neexpirat. Un wrap peste întrerupere cere un boot nou demonstrat
-sau reconciliere viitoare; repetarea secvențelor joase nu îl validează.
+precedent neexpirat. Un wrap peste întrerupere păstrează separat o bază
+candidată în metadata, legată de runtime. Numai avansul acesteia în același
+boot și înainte de expirare poate înlocui ancora acceptată; repetarea
+aceleiași secvențe joase nu îl validează. După restart candidatul cere din
+nou bază și progres. Regresiile obișnuite nu sunt candidați de wrap.
 Boot-ul persistent nu face wrap automat în acest profil.
+În hardware, limita identității este păstrată separat în metadata la prima
+decodare a cadrului coerent, fără să aștepte validarea senzorilor. Această
+limită este combinată cu istoricul existent la pornirea adaptorului și
+verificată în tranzacțiile care normalizează telemetria sau aplică rezultate.
+Citirea cache-ului aplică aceeași limită în tranzacția consumatorului:
+snapshot-ul, capacitatea, pregătirea și dispatch-ul accesului nu pot folosi
+un boot depășit. Invalidarea G se propagă tuturor stațiilor dependente;
+invalidarea unei stații se propagă numai senzorilor acesteia.
 
 La prima conectare, boot nou, restart sau întrerupere ambiguă, se păstrează
 o bază de observație și se cere un progres ulterior înainte de validare.

@@ -14,7 +14,7 @@ niciun fișier `.env`, inclusiv cel local rămas din pregătirea Node.js.
 | --- | --- | --- |
 | PARKING_DATABASE_PATH | backend/data/parking.sqlite3, absolut față de surse | Baza persistentă; o cale configurată relativ este relativă la directorul de pornire. |
 | PARKING_MODE | simulation | simulation sau hardware; baza nu poate schimba modul. |
-| PARKING_TRANSPORT | TCP | TCP sau USB, raportat în snapshot; transportul fizic nu este încă conectat. |
+| PARKING_TRANSPORT | TCP | TCP sau USB; în hardware selectează adaptorul activat explicit în HARDWARE.md. |
 | PARKING_HOURLY_RATE_BANI | 500 | Rata pentru sesiuni noi; rata sesiunilor existente nu se schimbă. |
 | PARKING_WORKER_ENABLED | true | Procesarea automată a cozii de business. |
 | PARKING_WORKER_INTERVAL_SECONDS | 0.1 | Interval 0.05–5 secunde între loturi. |
@@ -90,7 +90,9 @@ Fără adaptor, pornirea afișează date necunoscute și o intrare poate primi
 rejected/DATA_UNAVAILABLE. Cu telemetrie injectată de teste, accesul poate
 ajunge executing/prepared, dar nu devine done fără dovada explicită.
 Simulatorul complet este descris în [SIMULATOR.md](SIMULATOR.md).
-I/O MODBUS și testul E2E cu frontend-ul urmează.
+În hardware, activarea explicită a adaptorului conectează polling-ul și
+dispatch-ul MODBUS, descrise în [HARDWARE.md](HARDWARE.md). I/O rulează în
+afara tranzacțiilor. Testul E2E cu frontend-ul rămâne pentru integrare.
 
 ## Erori
 

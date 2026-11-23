@@ -402,9 +402,12 @@ class ParkingTests(unittest.TestCase):
         for sequence in (0xFFFFFFFD, 0xFFFFFFFE, 0xFFFFFFFF):
             self.service.ingest_telemetry(frame(sequence, 9))
         self.service.ingest_telemetry(self.unavailable())
-        for sequence in (0, 1, 2):
+        for sequence in (0, 1):
             self.service.ingest_telemetry(frame(sequence, 9))
             self.assertIsNone(self.service.get_capacity().available)
+        # The gateway candidate advances first, then the station candidates.
+        self.service.ingest_telemetry(frame(2, 9))
+        self.assertEqual(self.service.get_capacity().available, 4)
         for sequence in (1, 2, 3):
             self.service.ingest_telemetry(frame(sequence, 10))
         self.assertEqual(self.service.get_capacity().available, 4)

@@ -132,6 +132,21 @@ nouă demonstrată. La prima conectare se cere progres de secvență înainte
 de publicarea datelor valide. Un MCU care îngheață atât secvența cât și
 vârsta nu poate produce validitate nelimitată prin citiri repetate.
 
+După un wrap ambiguu, adaptorul și istoricul SQLite păstrează separat o
+bază candidată: aceeași secvență nu o validează. Numai un avans în același
+boot, în limita de prospețime, poate înlocui ancora acceptată. Candidații
+persistenți sunt legați de runtime; după restart cer o nouă bază și progres.
+Aceeași pereche boot/secvență nu primește o ancoră nouă după expirare sau
+întrerupere. După expirare trebuie observată o secvență distinctă ca bază,
+apoi încă un avans înainte de validare.
+Limita de boot deja cunoscută nu scade. Worker-ul o încarcă în adaptor,
+iar aplicarea rezultatelor hardware o verifică atomic în SQLite, inclusiv
+când rezultatul provine de la un adaptor nou.
+Limita identității se persistă separat, imediat după decodarea cadrului
+coerent, înainte de validarea prospețimii sau publicarea telemetriei.
+Prima observație dintr-un boot nou rămâne astfel durabilă chiar dacă
+senzorii sunt încă necunoscuți și procesul repornește înainte de progres.
+
 Flags ready/local-data-valid trebuie să fie active. local-data-valid
 înseamnă înregistrare de achiziție coerentă; nu promite validitatea tuturor
 senzorilor. Pentru S1/S2, validMask din antet și payload[2] trebuie să fie

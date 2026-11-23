@@ -19,3 +19,10 @@ class Settings(BaseSettings):
     simulator_enabled: bool = True
     simulator_step_delay_ms: int = Field(default=200, ge=50, le=10000)
     simulator_auto_passage: bool = True
+    hardware_enabled: bool = False
+    modbus_host: str = "127.0.0.1"
+    modbus_port: int = Field(default=502, ge=1, le=65535)
+    modbus_serial_port: str = "COM3"
+    modbus_baudrate: int = Field(default=19200, ge=1200, le=115200)
+    modbus_parity: Literal["N", "E", "O"] = "N"
+    modbus_timeout_seconds: float = Field(default=0.3, ge=0.05, le=2)

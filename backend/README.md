@@ -2,7 +2,8 @@
 
 Backend Python + FastAPI, cu API HTTP, persistență SQLite și simulator
 persistent pentru fluxul complet intrare/plată/ieșire. Pornește implicit
-în simulare; comunicația fizică STM32 urmează în pasul 6.
+în simulare; adaptoarele MODBUS TCP și RTU sunt disponibile opțional.
+Compatibilitatea cu firmware-ul STM32 necesită validare pe dispozitiv.
 
 ## Cerințe
 
@@ -84,6 +85,7 @@ Răspunsul backend-ului respectă aceste cerințe. Codul frontend nu este inclus
   recuperarea după restart și limitele de integrare cu simulatorul/hardware-ul.
 - [API.md](API.md): configurația, rutele HTTP, worker-ul și verificarea pasului 4.
 - [SIMULATOR.md](SIMULATOR.md): scenariul complet, controalele și persistența pasului 5.
+- [HARDWARE.md](HARDWARE.md): configurarea TCP/RTU, polling-ul și limitele profilului v2.1.
 
 Fișierele locale `package.json`, `package-lock.json` și `tsconfig.json`
 provin din pregătirea anterioară Node.js și nu sunt folosite de acest backend.

@@ -241,6 +241,8 @@ def register_manifest() -> dict:
             "freshness": {"defaultStaleAfterMs": 2000, "sampleAge": "MCU monotonic elapsed since actual acquisition, not since register read",
                           "effectiveAge": "max(sampleAgeMs + roundTripMs + elapsedSinceResponseMs, firstEstimatedAgeMs + elapsedSinceSequenceFirstSeenMs)",
                           "firstEstimate": "Store sampleAgeMs + firstRoundTripMs at first response for (nodeId,bootEpoch,sampleSequence); never reset for repeated reads",
+                          "ambiguousWrap": "Preserve the accepted anchor; store a separate runtime-bound candidate. Never re-anchor the same boot/sequence, even after expiry or interruption. Once expired, require a distinct baseline sequence and a further advance in the same boot within the freshness limit before replacing the accepted anchor.",
+                          "bootIdentity": "Persist the maximum boot immediately after decoding a coherent identity frame, before freshness validation or telemetry publication. Unknown sensor quality must not erase or delay this bound. Seed adapters and guard transactional command results and telemetry with the durable bound.",
                           "validWhen": "effectiveAge < staleAfterMs; identity matches; flags ready and local-data-valid; validMask permits field; gateway path valid"},
             "coherence": "One FC04 returns one immutable latched record including identity, boot, age, payload and command result. Partial or malformed reads are unusable.",
         },
@@ -253,6 +255,7 @@ def register_manifest() -> dict:
             "S5": {"count": 0, "fields": [], "validMask": 0},
         },
         "slotValidity": {
+            "ledOutputMask": "Four output bits (0..15): green A, red A, green B, red B; [1,1,3,6] means A occupied, B free",
             "headerBits": {"0": "local slot A sensor valid", "1": "local slot B sensor valid"},
             "payloadMask": "payload2 must equal header validMask exactly; only bits 0 and 1 may be set",
             "mismatch": "Reject the entire node sample, publish both slots unknown",
@@ -261,6 +264,7 @@ def register_manifest() -> dict:
             "flags": "local-data-valid means coherent acquisition record, not that every sensor is valid",
         },
         "commandRecord": {
+            "observationValidity": "Use the same monotonic boot/sequence/freshness history as polling; require current validated gateway path and target observation. Regressed boot, missing progress after interruption, or stale observation yields unknown. The retained command record itself has no age limit.",
             "scope": "last-processed-request-including-refusals", "historyQueryable": False,
             "match": ["nodeId == requested.nodeId", "observation.bootEpoch == requested.expectedBootEpoch",
                       "recordBootEpoch == requested.expectedBootEpoch", "recordCommandId == requested.commandId",

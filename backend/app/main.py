@@ -18,6 +18,8 @@ from .settings import Settings
 from .storage import Database
 from .simulator import SimulatorRuntime
 from .worker import business_worker
+from .modbus import ModbusDeviceAdapter
+from .hardware import hardware_worker
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +47,14 @@ def create_app(settings: Settings | None = None, *, service: ParkingService | No
                                          auto_passage=settings.simulator_auto_passage, transport=settings.transport)
             await run_in_threadpool(simulator.connect)
         application.state.simulator = simulator
+        adapter = ModbusDeviceAdapter.from_settings(settings) if settings.mode == "hardware" and settings.hardware_enabled else None
+        application.state.hardware_adapter = adapter
         stop = asyncio.Event()
-        task = asyncio.create_task(business_worker(active, stop, settings.worker_interval_seconds, simulator)) if settings.worker_enabled else None
+        if settings.worker_enabled:
+            task = asyncio.create_task(hardware_worker(active, adapter, stop, settings.worker_interval_seconds)
+                                       if adapter else business_worker(active, stop, settings.worker_interval_seconds, simulator))
+        else:
+            task = None
         application.state.worker_task = task
         try:
             yield
@@ -57,6 +65,8 @@ def create_app(settings: Settings | None = None, *, service: ParkingService | No
             if simulator:
                 active.simulation_handler = None
                 await simulator.adapter.close()
+            if adapter:
+                await adapter.close()
 
     application = FastAPI(title="STM32 Smart Parking API", description="Persistent parking API; simulated payments.",
                           version="0.1.0", lifespan=lifespan)
