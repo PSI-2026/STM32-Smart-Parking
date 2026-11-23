@@ -1,10 +1,17 @@
 # Compatibilitate firmware și backend
 
-Această matrice compară firmware-ul MODBUS RTU v1.0 din `origin/main` la
-`6acd3b1` cu profilul distribuit v2.1 descris de contractul backend de pe
-`origin/feature/backend-complete`. Analiza este read-only pentru ramura
-backend; niciun fișier din PR #9 nu a fost modificat. Contractul v2.1 este
-țintă software, nu dovadă de suport sau validare pe placa STM32.
+Această matrice compară următoarele revizii fixe:
+
+- Firmware MODBUS RTU v1.0: `6acd3b19a0d86a4ae872390c55d6afa0b39839d2`,
+  commit-ul de merge al PR #8, publicat în `main`.
+- Contract backend v2.1: `468fa5851b0020f354e8eb2fb0f4d99a652477a5`,
+  fișierul `backend/contracts/modbus-parking.v2.json` din PR #9.
+
+Numele de ramuri pot avansa; hash-urile de mai sus identifică sursele analizei.
+
+Analiza este read-only pentru ramura backend; niciun fișier din PR #9 nu a
+fost modificat. Contractul v2.1 este țintă software, nu dovadă de suport sau
+validare pe placa STM32.
 
 **Notă privind versiunile analizate:** Commit-ul `792d8bc`, menționat în planul
 inițial, reprezintă starea repository-ului înainte de integrarea PR #7 și PR #8.

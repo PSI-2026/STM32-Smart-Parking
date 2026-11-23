@@ -168,7 +168,7 @@ static void response_capacity_test(void)
         }
         assert(g.state == GATE_CLOSED);
     }
-    /* An undersized acknowledgement must not commit simulated occupancy. */
+    /* An undersized acknowledgement must not stage a valid occupancy mask. */
     HybridParking p;
     SharedGate g;
     ModbusSlave s;
@@ -176,7 +176,9 @@ static void response_capacity_test(void)
     SharedGate_Init(&g, GATE_SIMULATION);
     ModbusSlave_Init(&s, 1U, &p, &g);
     s.sim_occupied = 0x0002U;
-    uint8_t simulation_req[8] = {1U, 6U, 1U, 2U, 0U, 0x0fU, 0U, 0U};
+    /* Bit zero belongs to physical P01: setting it would be rejected even
+     * without the response-capacity guard and would not exercise mutation. */
+    uint8_t simulation_req[8] = {1U, 6U, 1U, 2U, 0U, 0x0cU, 0U, 0U};
     for (size_t capacity = 0U; capacity < 8U; ++capacity) {
         uint8_t guarded[10];
         memset(guarded, 0xa5, sizeof guarded);
@@ -187,6 +189,10 @@ static void response_capacity_test(void)
         for (size_t i = 0U; i < sizeof guarded; ++i)
             assert(guarded[i] == 0xa5U);
     }
+    uint8_t full_reply[8];
+    assert(ModbusSlave_Process(&s, simulation_req, frame(simulation_req, 6U),
+        full_reply, sizeof full_reply, 1U) == 8U);
+    assert(s.sim_occupied == 0x000cU);
     /* A too-small acknowledgement buffer must not actuate the gate either. */
     HybridParking_Init(&p, true);
     SharedGate_Init(&g, GATE_SIMULATION);
