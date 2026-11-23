@@ -1,9 +1,9 @@
 # Persistență și reguli de business — pasul 3
 
 Implementarea este în `app/storage.py`, `app/telemetry.py` și `app/parking.py`. Ea poate fi
-testată independent de HTTP și hardware. Serverul FastAPI păstrează încă
-numai health; rutele și worker-ul se conectează în pasul 4, simulatorul în
-pasul 5, transporturile în pasul 6. Nu există I/O MODBUS în tranzacții.
+testată independent de HTTP și hardware. Rutele și worker-ul sunt conectate
+în pasul 4, descris în [API.md](API.md); simulatorul urmează în pasul 5,
+transporturile în pasul 6. Nu există I/O MODBUS în tranzacții.
 
 ## Inițializare
 
@@ -205,7 +205,7 @@ anterior intrării confirmate refuză calculul/plata, fără sume negative.
 `list_sessions`, `list_events`, `get_capacity` și `get_telemetry` sunt
 punctele de integrare pentru API. Listele paginate folosesc un cursor
 keyset timp/ID validat, nu offset-uri mutate de inserări noi. Compunerea
-snapshot-ului HTTP dintr-o singură tranzacție va fi făcută în pasul 4;
+snapshot-ului HTTP dintr-o singură tranzacție este implementată în `snapshot()`;
 apelurile independente de citire nu pretind același snapshot SQLite.
 
 Din rădăcina repository-ului:

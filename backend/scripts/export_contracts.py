@@ -36,7 +36,7 @@ def artifacts() -> dict[str, dict]:
         return {"description": description, "content": {"application/json": {
             "schema": {"$ref": f"#/components/schemas/{model}"}}}}
 
-    def operation(operation_id, model, *, status="200", implemented=False, parameters=None, errors=()):
+    def operation(operation_id, model, *, status="200", implemented=True, parameters=None, errors=()):
         result = {
             "operationId": operation_id, "x-implemented": implemented,
             "responses": {status: response(model, "Success"), **{
@@ -56,26 +56,27 @@ def artifacts() -> dict[str, dict]:
         {"name": "cursor", "in": "query", "schema": {"type": "string", "minLength": 1, "maxLength": 512}},
     ]
     internal = (500, "Internal error")
-    unavailable = (503, "Persistence unavailable; command ID not reserved")
-    invalid = (422, "Invalid request; command ID not reserved")
+    unavailable = (503, "Service or persistence unavailable")
+    invalid = (422, "Invalid request")
     missing = (404, "Not found")
     submit = operation("submitCommand", "CommandResult", status="202", errors=(
-        (409, "ID already identifies a different normalized action"), invalid, unavailable, internal))
+        (409, "ID already identifies a different normalized action"),
+        (422, "Invalid request; command ID not reserved"), unavailable, internal))
     submit["requestBody"] = {"required": True, "content": {"application/json": {
         "schema": {"$ref": "#/components/schemas/CommandRequest"}}}}
     submit["responses"]["200"] = response("CommandResult", "Previously stored command (idempotent replay)")
     spec = {
         "openapi": "3.1.0", "info": {"title": "Smart Parking target API", "version": "1.0.0",
-            "description": "Integration target. Only health is implemented at step 2; other operations are planned."},
+            "description": "HTTP API implemented in step 4. Device I/O and the simulator are integrated in subsequent steps."},
         "servers": [{"url": "http://127.0.0.1:8000"}],
         "paths": {
             "/api/v1/health": {"get": operation("healthCheck", "Health", implemented=True)},
-            "/api/v1/snapshot": {"get": operation("getSnapshot", "ParkingSnapshot", errors=(internal,))},
+            "/api/v1/snapshot": {"get": operation("getSnapshot", "ParkingSnapshot", errors=(internal, unavailable))},
             "/api/v1/commands": {"post": submit},
-            "/api/v1/commands/{commandId}": {"get": operation("getCommand", "CommandResult", parameters=command_id, errors=(missing, invalid, internal))},
-            "/api/v1/sessions": {"get": operation("listSessions", "SessionPage", parameters=pagination, errors=(invalid, internal))},
-            "/api/v1/sessions/{sessionId}": {"get": operation("getSession", "ParkingSession", parameters=session_id, errors=(missing, invalid, internal))},
-            "/api/v1/events": {"get": operation("listEvents", "EventPage", parameters=pagination, errors=(invalid, internal))},
+            "/api/v1/commands/{commandId}": {"get": operation("getCommand", "CommandResult", parameters=command_id, errors=(missing, invalid, internal, unavailable))},
+            "/api/v1/sessions": {"get": operation("listSessions", "SessionPage", parameters=pagination, errors=(invalid, internal, unavailable))},
+            "/api/v1/sessions/{sessionId}": {"get": operation("getSession", "ParkingSession", parameters=session_id, errors=(missing, invalid, internal, unavailable))},
+            "/api/v1/events": {"get": operation("listEvents", "EventPage", parameters=pagination, errors=(invalid, internal, unavailable))},
         },
         "components": {"schemas": components},
     }

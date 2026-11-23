@@ -1,7 +1,7 @@
 # Contracte de integrare — API v1.0.0 / MODBUS țintă v2.1
 
-Acestea sunt contracte pentru etapele următoare. Numai health este implementat
-în server. Nici firmware-ul actual, nici vechea hartă locală v2.0 nu oferă
+Rutele HTTP v1 sunt implementate în pasul 4; integrarea simulatorului și
+a transporturilor urmează. Nici firmware-ul actual, nici vechea hartă locală v2.0 nu oferă
 încă extensia v2.1 descrisă aici. Lipsa ei blochează scrierile hardware;
 nu se încearcă autodetectare prin comenzi sau fallback la v2.0/single-slave.
 
@@ -33,12 +33,12 @@ Nodurile sunt `G`, `S1`…`S5`, locurile 1–4, barierele `entry` și `exit`.
 | Metodă / rută după `/api/v1` | Succes | Erori înainte de admitere/citire |
 | --- | --- | --- |
 | GET `/health` | 200, contractul existent | Nicio eroare de business |
-| GET `/snapshot` | 200, inclusiv cu telemetrie necunoscută | 500 |
+| GET `/snapshot` | 200, inclusiv cu telemetrie necunoscută | 500, 503 |
 | POST `/commands` | 202 comandă nouă; 200 replay | 409 conflict ID; 422 format; 503 persistență indisponibilă; 500 |
-| GET `/commands/{commandId}` | 200 | 404, 422, 500 |
-| GET `/sessions` | 200 paginat | 422, 500 |
-| GET `/sessions/{sessionId}` | 200 | 404, 422, 500 |
-| GET `/events` | 200 paginat | 422, 500 |
+| GET `/commands/{commandId}` | 200 | 404, 422, 500, 503 |
+| GET `/sessions` | 200 paginat | 422, 500, 503 |
+| GET `/sessions/{sessionId}` | 200 | 404, 422, 500, 503 |
+| GET `/events` | 200 paginat | 422, 500, 503 |
 
 Listele paginate au `limit` 1–200, implicit 50, `cursor` opac și
 `nextCursor: null` la sfârșit. Ordinea este descrescătoare după timpul
@@ -76,8 +76,7 @@ Comanda respinsă definitiv poate fi urmată de o intenție nouă cu ID nou.
 Stări: `accepted` → `executing` → `done`, `rejected`, `failed`, `expired`
 sau `unknown`. Se poate refuza direct din `accepted`. `unknown` permite
 reconciliere ulterioară; nu este succes. Codurile de eroare sunt enumerate
-în modele. La implementarea rutelor, erorile implicite FastAPI vor fi
-adaptate la formatul API; serverul curent păstrează doar health.
+în modele. Erorile implicite FastAPI sunt adaptate la formatul API.
 
 Acțiunile `enter`, `pay`, `exit` sunt de business. `set-slot-sensor`,
 `set-all-slot-sensors`, `set-node-online`, `set-obstacle`,

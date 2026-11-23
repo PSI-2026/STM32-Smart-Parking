@@ -1,8 +1,8 @@
 # Backend STM32 Smart Parking
 
-Backend Python + FastAPI. Serverul oferă momentan verificarea HTTP a
-serviciului. Persistența SQLite și logica sesiunilor/plăților sunt
-implementate separat; conectarea rutelor și comunicația STM32 urmează.
+Backend Python + FastAPI, cu API HTTP, persistență SQLite și worker pentru
+regulile parcării. Simulatorul complet și comunicația STM32 urmează;
+fără adaptor, datele parcării sunt necunoscute.
 
 ## Cerințe
 
@@ -73,15 +73,16 @@ Răspunsul backend-ului respectă aceste cerințe. Codul frontend nu este inclus
 
 ## Fișiere și stadiu
 
-- `app/main.py`: aplicația FastAPI și endpoint-ul health.
+- `app/main.py`: aplicația FastAPI, lifespan și rutele API v1.
 - `pyproject.toml`: versiunea Python acceptată și dependențele directe.
 - `uv.lock`: versiunile rezolvate ale dependențelor; se păstrează în Git.
 - [contracts/README.md](contracts/README.md): contractele țintă API și MODBUS,
   diferențele față de frontend-ul demo și comenzile de generare/verificare.
 - `app/contracts/`: modele validate; `contracts/openapi.v1.json` descrie
-  rutele planificate, nu rute deja implementate în server.
+  rutele implementate și contractele de integrare.
 - [BUSINESS.md](BUSINESS.md): serviciul tranzacțional din pasul 3,
   recuperarea după restart și limitele de integrare cu simulatorul/hardware-ul.
+- [API.md](API.md): configurația, rutele HTTP, worker-ul și verificarea pasului 4.
 
 Fișierele locale `package.json`, `package-lock.json` și `tsconfig.json`
 provin din pregătirea anterioară Node.js și nu sunt folosite de acest backend.

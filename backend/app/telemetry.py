@@ -9,6 +9,19 @@ import json
 from .contracts.firmware import DeviceTelemetry
 
 
+def unknown_telemetry():
+    observation = dict(quality="unknown", updatedAt=None, ageMs=None)
+    return DeviceTelemetry.model_validate({
+        "stations": [dict(id=node, role=role, online=False, schemaVersion=None, bootEpoch=None,
+                          sampleSequence=None, **observation)
+                     for node, role in zip(["G", "S1", "S2", "S3", "S4", "S5"],
+                                          ["gateway", "slots", "slots", "entry", "exit", "environment"])],
+        "slots": [dict(id=i, nodeId="S1" if i <= 2 else "S2", occupied=None, **observation) for i in range(1, 5)],
+        "barriers": [dict(id=lane, nodeId=node, state="UNKNOWN", obstacle=None, vehiclePresent=None,
+                          feedback="unknown", **observation) for lane, node in [("entry", "S3"), ("exit", "S4")]],
+    })
+
+
 def age_telemetry(data, elapsed):
     threshold = data["staleAfterMs"]
     for item in [*data["stations"], *data["slots"], *data["barriers"]]:

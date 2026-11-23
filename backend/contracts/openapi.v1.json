@@ -3,7 +3,7 @@
   "info": {
     "title": "Smart Parking target API",
     "version": "1.0.0",
-    "description": "Integration target. Only health is implemented at step 2; other operations are planned."
+    "description": "HTTP API implemented in step 4. Device I/O and the simulator are integrated in subsequent steps."
   },
   "servers": [
     {
@@ -32,7 +32,7 @@
     "/api/v1/snapshot": {
       "get": {
         "operationId": "getSnapshot",
-        "x-implemented": false,
+        "x-implemented": true,
         "responses": {
           "200": {
             "description": "Success",
@@ -53,6 +53,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Service or persistence unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }
@@ -60,7 +70,7 @@
     "/api/v1/commands": {
       "post": {
         "operationId": "submitCommand",
-        "x-implemented": false,
+        "x-implemented": true,
         "responses": {
           "202": {
             "description": "Success",
@@ -93,7 +103,7 @@
             }
           },
           "503": {
-            "description": "Persistence unavailable; command ID not reserved",
+            "description": "Service or persistence unavailable",
             "content": {
               "application/json": {
                 "schema": {
@@ -138,7 +148,7 @@
     "/api/v1/commands/{commandId}": {
       "get": {
         "operationId": "getCommand",
-        "x-implemented": false,
+        "x-implemented": true,
         "responses": {
           "200": {
             "description": "Success",
@@ -161,7 +171,7 @@
             }
           },
           "422": {
-            "description": "Invalid request; command ID not reserved",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -172,6 +182,16 @@
           },
           "500": {
             "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service or persistence unavailable",
             "content": {
               "application/json": {
                 "schema": {
@@ -200,7 +220,7 @@
     "/api/v1/sessions": {
       "get": {
         "operationId": "listSessions",
-        "x-implemented": false,
+        "x-implemented": true,
         "responses": {
           "200": {
             "description": "Success",
@@ -213,7 +233,7 @@
             }
           },
           "422": {
-            "description": "Invalid request; command ID not reserved",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -224,6 +244,16 @@
           },
           "500": {
             "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service or persistence unavailable",
             "content": {
               "application/json": {
                 "schema": {
@@ -259,7 +289,7 @@
     "/api/v1/sessions/{sessionId}": {
       "get": {
         "operationId": "getSession",
-        "x-implemented": false,
+        "x-implemented": true,
         "responses": {
           "200": {
             "description": "Success",
@@ -282,7 +312,7 @@
             }
           },
           "422": {
-            "description": "Invalid request; command ID not reserved",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -293,6 +323,16 @@
           },
           "500": {
             "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service or persistence unavailable",
             "content": {
               "application/json": {
                 "schema": {
@@ -321,7 +361,7 @@
     "/api/v1/events": {
       "get": {
         "operationId": "listEvents",
-        "x-implemented": false,
+        "x-implemented": true,
         "responses": {
           "200": {
             "description": "Success",
@@ -334,7 +374,7 @@
             }
           },
           "422": {
-            "description": "Invalid request; command ID not reserved",
+            "description": "Invalid request",
             "content": {
               "application/json": {
                 "schema": {
@@ -345,6 +385,16 @@
           },
           "500": {
             "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service or persistence unavailable",
             "content": {
               "application/json": {
                 "schema": {

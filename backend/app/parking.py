@@ -10,11 +10,11 @@ from pydantic import TypeAdapter
 
 from .contracts.api import (
     Capacity, CommandRequest, CommandResult, ErrorDetail, EventPage, Identifier,
-    ParkingEvent, ParkingSession, SessionPage, SlotId,
+    ParkingEvent, ParkingSession, ParkingSlot, ParkingSnapshot, SessionPage, SlotId,
 )
 from .contracts.firmware import DeviceCommand, DeviceCommandResult, DeviceTelemetry, PassageEvidence, passage_matches
 from .storage import Database
-from .telemetry import age_telemetry, normalize_telemetry
+from .telemetry import age_telemetry, normalize_telemetry, unknown_telemetry
 
 
 def canonical(value) -> str:
@@ -174,9 +174,9 @@ class ParkingService:
             raise BusinessFault("NOT_FOUND", "Sesiunea nu există.")
         return row
 
-    def _session(self, connection, row):
+    def _session(self, connection, row, *, at=None):
         paid = connection.execute("SELECT COALESCE(SUM(amount_bani),0) FROM payments WHERE session_id=?", (row["id"],)).fetchone()[0]
-        due = (max(0, tariff_bani(row["entered_at"], self.clock_ms(), row["hourly_rate_bani"]) - paid)
+        due = (max(0, tariff_bani(row["entered_at"], self.clock_ms() if at is None else at, row["hourly_rate_bani"]) - paid)
                if row["entered_at"] is not None and row["paid_at"] is None else 0)
         return ParkingSession.from_internal(id=row["id"], plate=row["plate"], slot_id=row["slot_id"],
             entered_at=row["entered_at"], exited_at=row["exited_at"], status=row["status"],
@@ -490,6 +490,41 @@ class ParkingService:
     def pending_commands(self):
         with self.db.transaction(write=False) as connection:
             return [row[0] for row in connection.execute("SELECT id FROM commands WHERE status='accepted' ORDER BY created_at,id")]
+
+    def processable_commands(self, *, limit=50, excluded=frozenset(), ordered_ids=None):
+        self._pagination(limit, None)
+        with self.db.transaction(write=False) as connection:
+            commands = []
+            rows = (connection.execute("SELECT id,action_json FROM commands WHERE id=? AND status='accepted'", (identifier,)).fetchone()
+                    for identifier in ordered_ids) if ordered_ids is not None else connection.execute(
+                        "SELECT id,action_json FROM commands WHERE status='accepted' ORDER BY created_at,id")
+            for row in rows:
+                if row is not None and row["id"] not in excluded and (self.mode == "hardware" or json.loads(row["action_json"])["type"] in ("enter", "pay", "exit")):
+                    commands.append(row["id"])
+                    if len(commands) == limit:
+                        break
+            return commands
+
+    def snapshot(self, *, transport="TCP") -> ParkingSnapshot:
+        """One SQLite read snapshot and one valuation time for all business data."""
+        with self.db.transaction(write=False) as connection:
+            telemetry = self._current_telemetry(connection) or unknown_telemetry()
+            now = self.clock_ms()
+            sessions = [self._session(connection, row, at=now) for row in connection.execute(
+                "SELECT * FROM sessions WHERE status NOT IN ('completed','cancelled') ORDER BY created_at DESC,id DESC")]
+            assigned = {session.slot_id: session.id for session in sessions if session.slot_id is not None}
+            slots = [ParkingSlot.model_validate(slot.model_dump(by_alias=True) | {"sessionId": assigned.get(slot.id)})
+                     for slot in telemetry.slots]
+            events = [ParkingEvent.from_internal(**dict(row)) for row in connection.execute(
+                "SELECT * FROM events ORDER BY at DESC,id DESC LIMIT 50")]
+            commands = [self._result(row) for row in connection.execute(
+                "SELECT * FROM commands ORDER BY created_at DESC,id DESC LIMIT 50")]
+            return ParkingSnapshot.from_internal(
+                mode=self.mode, transport=transport, updated_at=now, hourly_rate_bani=self.hourly_rate_bani,
+                stale_after_ms=telemetry.stale_after_ms, stations=telemetry.stations, slots=slots,
+                barriers=telemetry.barriers, capacity=self._capacity(connection, telemetry),
+                sessions=sessions, events=events, commands=commands,
+            )
 
     def _pagination(self, limit, cursor):
         if type(limit) is not int or not 1 <= limit <= 200:

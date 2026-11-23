@@ -4,6 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -13,7 +14,8 @@ from fastapi.testclient import TestClient
 
 from app.contracts.api import Barrier, Capacity, CommandRequest, CommandResult, DEVICE_SCHEMA_VERSION, ParkingSession, ParkingSlot, ParkingSnapshot, Station
 from app.contracts.firmware import OBSERVATION_COUNT, CommandObservation, DeviceCommand, DeviceCommandResult, DeviceTelemetry, FreshnessProof, PassageEvidence, SlotSample, passage_matches, result_for
-from app.main import app
+from app.main import create_app
+from app.settings import Settings
 
 
 class ContractTests(unittest.TestCase):
@@ -184,11 +186,14 @@ class ContractTests(unittest.TestCase):
                                reconciliation_required=True)
 
     def test_existing_health_and_runtime_spec_remain_compatible(self):
-        with TestClient(app) as client:
+        with tempfile.TemporaryDirectory() as directory, TestClient(create_app(Settings(
+            database_path=Path(directory) / "parking.sqlite3", worker_enabled=False))) as client:
             response = client.get("/api/v1/health")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json(), {"status": "healthy", "service": "smart-parking-backend", "version": "0.1.0"})
-            self.assertEqual(set(client.get("/openapi.json").json()["paths"]), {"/api/v1/health"})
+            self.assertEqual(set(client.get("/openapi.json").json()["paths"]), {
+                "/api/v1/health", "/api/v1/snapshot", "/api/v1/commands", "/api/v1/commands/{commandId}",
+                "/api/v1/sessions", "/api/v1/sessions/{sessionId}", "/api/v1/events"})
 
     def test_station_identity_and_barrier_quality(self):
         sample = dict(quality="valid", updatedAt=100, ageMs=0)
