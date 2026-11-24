@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     simulator_step_delay_ms: int = Field(default=200, ge=50, le=10000)
     simulator_auto_passage: bool = True
     hardware_enabled: bool = False
+    hardware_profile: Literal["distributed-v2.1", "hybrid-v1-readonly"] = "distributed-v2.1"
+    legacy_unit_id: int = Field(default=1, ge=1, le=247)
+    legacy_poll_interval_seconds: float = Field(default=0.5, ge=0.1, le=5)
+    legacy_stale_after_ms: int = Field(default=2000, ge=500, le=10000)
     modbus_host: str = "127.0.0.1"
     modbus_port: int = Field(default=502, ge=1, le=65535)
     modbus_serial_port: str = "COM3"
@@ -33,6 +37,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_access(self):
+        if self.hardware_profile == "hybrid-v1-readonly" and (self.mode != "hardware" or self.transport != "USB"):
+            raise ValueError("The v1 diagnostic profile requires hardware mode and USB/RTU")
         tokens = [value.get_secret_value() for value in
                   (self.viewer_token, self.operator_token, self.admin_token) if value is not None]
         if any(len(token) < 32 or any(c.isspace() for c in token) for token in tokens):

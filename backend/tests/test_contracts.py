@@ -193,7 +193,8 @@ class ContractTests(unittest.TestCase):
             self.assertEqual(response.json(), {"status": "healthy", "service": "smart-parking-backend", "version": "0.1.0"})
             self.assertEqual(set(client.get("/openapi.json").json()["paths"]), {
                 "/api/v1/health", "/api/v1/snapshot", "/api/v1/commands", "/api/v1/commands/{commandId}",
-                "/api/v1/sessions", "/api/v1/sessions/{sessionId}", "/api/v1/events"})
+                "/api/v1/sessions", "/api/v1/sessions/{sessionId}", "/api/v1/events",
+                "/api/v1/diagnostics/legacy"})
 
     def test_station_identity_and_barrier_quality(self):
         sample = dict(quality="valid", updatedAt=100, ageMs=0)

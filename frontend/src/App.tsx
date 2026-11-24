@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { parkingApi } from './api';
 import { validRequest } from './api/wire';
 import { ApiAccess } from './components/ApiAccess';
+import { LegacySensor } from './components/LegacySensor';
 import { getBarrierState, getOccupancy, getSlotState, isNodeAvailable } from './api/selectors';
 import type { ParkingAction, ParkingSnapshot } from './api/types';
 import { EntryDialog } from './components/EntryDialog';
@@ -50,6 +51,7 @@ export function App() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'active' | 'all'>('active');
   const [unresolved, setUnresolved] = useState<PendingRequest | null>(restoredRequest);
+  const [legacySelected, setLegacySelected] = useState(false);
   const busy = pending || unresolved !== null;
   const counts = getOccupancy(snapshot);
   const online = isNodeAvailable(snapshot, 'G');
@@ -116,7 +118,7 @@ export function App() {
     </aside>
 
     <div className="workspace">
-      <header className="topbar"><div className="breadcrumb">Smart Parking <span>/</span><strong>{navigation.find((item) => item.id === view)!.label}</strong></div><div className="topbar-status"><span className="simulation-label" title="Modul și comunicația sunt raportate de backend. Plata este simulată."><span />{snapshot.mode === 'hardware' ? 'Mod hardware' : snapshot.mode === 'simulation' ? 'Simulare backend' : 'Mod necunoscut'}</span><span className="topbar-divider" /><span className={`connection ${online ? '' : 'offline'}`}><span className="status-dot" />{online ? 'Sistem conectat' : 'Gateway indisponibil'}</span></div></header>
+      <header className="topbar"><div className="breadcrumb">Smart Parking <span>/</span><strong>{navigation.find((item) => item.id === view)!.label}</strong></div><div className="topbar-status"><span className="simulation-label" title="Modul și comunicația sunt raportate de backend. Plata este simulată."><span />{snapshot.mode === 'hardware' ? 'Mod hardware' : snapshot.mode === 'simulation' ? 'Simulare backend' : 'Mod necunoscut'}</span><span className="topbar-divider" /><span className={`connection ${online ? '' : 'offline'}`}><span className="status-dot" />{legacySelected ? 'Profil v1 · doar citire' : online ? 'Sistem conectat' : 'Gateway indisponibil'}</span></div></header>
       <main id="main" tabIndex={-1}>
         <div className="page-heading"><h1>{titles[view]}</h1><div className="heading-actions">{view === 'system'
           ? <button className="button secondary" disabled title="API-ul nu permite ștergerea datelor persistente."><Icon name="reset" size={16} /><span>Date persistente</span></button>
@@ -124,10 +126,11 @@ export function App() {
         }</div></div>
 
         <ApiAccess snapshot={snapshot} />
+        {snapshot.mode === 'hardware' && <LegacySensor onSelected={setLegacySelected} />}
         {unresolved && <div className="connection-alert" role="status"><span>Comandă în așteptare: {unresolved.commandId}. Nu emite o comandă nouă pentru aceeași operație.</span><button className="button secondary small" disabled={pending} onClick={() => void perform(unresolved)}>Verifică aceeași comandă</button></div>}
-        {!online && <div className="connection-alert" role="alert"><Icon name="alert" size={18} />Gateway deconectat. Datele sunt necunoscute, iar comenzile de acces sunt suspendate. Reconectează G din Sistem.</div>}
+        {!online && !legacySelected && <div className="connection-alert" role="alert"><Icon name="alert" size={18} />Gateway deconectat. Datele sunt necunoscute, iar comenzile de acces sunt suspendate. Verifică alimentarea și comunicația.</div>}
 
-        {view === 'overview' && <section className="panel parking-overview" aria-labelledby="parking-overview-title">
+        {view === 'overview' && !legacySelected && <section className="panel parking-overview" aria-labelledby="parking-overview-title">
           <div className="panel-heading parking-overview-heading">
             <div><h2 id="parking-overview-title">Situația parcării</h2><OccupancySummary snapshot={snapshot} /><p role="status">Capacitate disponibilă: {snapshot.capacity?.available ?? 'necunoscută'} · Rezervări în curs: {snapshot.capacity?.outstandingClaims ?? '—'}</p></div>
             <button disabled={snapshot.mode !== 'simulation'} className="button secondary small" aria-expanded={sensorsOpen} aria-controls="sensor-drawer" onClick={() => setSensorsOpen(true)}><Icon name="chip" size={16} />Simulare senzori</button>
@@ -148,9 +151,9 @@ export function App() {
           }} /><AccessPanel snapshot={snapshot} /></div>
         </section>}
 
-        {view === 'overview' && <SessionsPanel snapshot={snapshot} pending={busy} search={search} setSearch={setSearch} filter={filter} setFilter={setFilter} send={send} />}
+        {view === 'overview' && !legacySelected && <SessionsPanel snapshot={snapshot} pending={busy} search={search} setSearch={setSearch} filter={filter} setFilter={setFilter} send={send} />}
         {view === 'system' && <div className="system-sections">
-          <Diagnostics snapshot={snapshot} send={send} pending={busy} />
+          {!legacySelected && <Diagnostics snapshot={snapshot} send={send} pending={busy} />}
           <SensorSimulation snapshot={snapshot} onAction={send} pending={busy} />
           <Events snapshot={snapshot} onExport={exportEvents} />
         </div>}

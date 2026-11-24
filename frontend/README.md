@@ -1,5 +1,10 @@
 # Smart Parking — frontend HTTP
 
+Profilul hardware `hybrid-v1-readonly` afișează separat senzorul fizic P01,
+cu actualizare periodică și expirare locală. P02–P04 și capacitatea rămân
+necunoscute; accesul, plata și sesiunile sunt dezactivate. Configurarea plăcii
+și limitele observației sunt în [LEGACY_READONLY.md](../backend/LEGACY_READONLY.md).
+
 Dashboard React + TypeScript + Vite în limba română. Datele și comenzile
 vin din backend prin `ParkingApi`; mock-ul local este păstrat numai pentru
 teste. Nu există fallback automat la date demo.

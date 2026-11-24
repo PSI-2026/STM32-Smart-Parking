@@ -1,6 +1,14 @@
 """Named SQLite operations; caller owns connection, savepoints and atomic commit."""
 
 class ParkingRepository:
+    def hardware_profile(self, connection):
+        return connection.execute("SELECT value FROM metadata WHERE key='hardware_profile'").fetchone()
+
+    def bind_hardware_profile(self, connection, profile):
+        connection.execute("INSERT OR IGNORE INTO metadata VALUES ('hardware_profile',?)", (profile,))
+
+    def has_parking_state(self, connection):
+        return bool(connection.execute("SELECT EXISTS(SELECT 1 FROM commands) OR EXISTS(SELECT 1 FROM sessions) OR EXISTS(SELECT 1 FROM telemetry)").fetchone()[0])
 
     def mode(self, connection, parameters=()):
         return connection.execute("SELECT value FROM metadata WHERE key='mode'", parameters)

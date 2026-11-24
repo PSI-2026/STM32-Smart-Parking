@@ -22,13 +22,14 @@ from app.contracts.firmware import (
     CommandObservation, DeviceCommand, DeviceCommandResult, DeviceTelemetry,
     FreshnessProof, PassageEvidence, SlotSample, register_manifest, result_for,
 )
+from app.contracts.legacy import LegacyTelemetry
 
 
 def artifacts() -> dict[str, dict]:
     schema = TypeAdapter(Union[
         Health, ApiError, CommandRequest, CommandResult, ParkingSnapshot,
         SessionPage, EventPage, DeviceCommand, DeviceCommandResult, DeviceTelemetry,
-        PassageEvidence, CommandObservation, FreshnessProof, SlotSample,
+        PassageEvidence, CommandObservation, FreshnessProof, SlotSample, LegacyTelemetry,
     ]).json_schema(ref_template="#/components/schemas/{model}", mode="serialization")
     components = schema["$defs"]
 
@@ -81,6 +82,7 @@ def artifacts() -> dict[str, dict]:
             "/api/v1/sessions": {"get": operation("listSessions", "SessionPage", parameters=pagination, errors=(invalid, internal, unavailable))},
             "/api/v1/sessions/{sessionId}": {"get": operation("getSession", "ParkingSession", parameters=session_id, errors=(missing, invalid, internal, unavailable))},
             "/api/v1/events": {"get": operation("listEvents", "EventPage", parameters=pagination, errors=(invalid, internal, unavailable))},
+            "/api/v1/diagnostics/legacy": {"get": operation("getLegacyTelemetry", "LegacyTelemetry", errors=(internal, unavailable))},
         },
         "components": {"schemas": components, "securitySchemes": {
             "ParkingBearer": {"type": "http", "scheme": "bearer"}}},

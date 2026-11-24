@@ -43,6 +43,7 @@ La închidere semnalizează oprirea și așteaptă finalizarea lucrului curent.
 | Metodă / rută | Comportament |
 | --- | --- |
 | GET /api/v1/health | Răspunsul original, fără sondare hardware. |
+| GET /api/v1/diagnostics/legacy | Diagnostic v1 autentificat din cache; nu declanșează I/O. Vezi [LEGACY_READONLY.md](LEGACY_READONLY.md). |
 | GET /api/v1/snapshot | O singură tranzacție SQLite pentru telemetrie, capacitate, sesiuni, evenimente și comenzi. |
 | POST /api/v1/commands | Admitere persistentă: 202 pentru ID nou, 200 pentru replay. |
 | GET /api/v1/commands/{commandId} | Starea persistentă curentă. |
