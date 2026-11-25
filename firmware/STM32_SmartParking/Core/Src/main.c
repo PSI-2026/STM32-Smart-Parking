@@ -150,9 +150,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     uint32_t now = HAL_GetTick();
-    /* PA0 USER button: bench-only physical P01 input; no external sensor assumed. */
+    /* The P01 tracking module reports reflected light with a low output. */
     HybridParking_SetPhysical(&parking,
-        HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_SET);
+        HAL_GPIO_ReadPin(PARK1_SENSOR_GPIO_Port, PARK1_SENSOR_Pin) == GPIO_PIN_RESET);
     HybridParking_Tick(&parking, now);
     ModbusSlave_Tick(&modbus, now);
     SharedGate_Update(&gate, modbus.simulated_passage, true,

@@ -1,5 +1,28 @@
 import { expect, test } from '@playwright/test';
 
+test('v1 diagnostic card with explicit HTTP fixture: free, occupied, unavailable; controls disabled', async ({ page }) => {
+  let occupied = false, unavailable = false;
+  await page.route('**/api/v1/diagnostics/legacy', async route => {
+    if (unavailable) return route.abort('failed');
+    return route.fulfill({ json: { profile: 'hybrid-v1-readonly', selected: true, enabled: true, readOnly: true,
+      unitId: 1, protocolVersion: 256, connected: true, quality: 'reported', observedAt: Date.now(), ageMs: 0,
+      staleAfterMs: 2000, deviceHealth: 1, physicalSlotId: 1, deviceKnown: true, occupied,
+      rawRegisters: [1, 256, 1, Number(occupied), Number(occupied), 1],
+      freshnessGuarantee: 'communication-only', message: 'UI test fixture' } });
+  });
+  await page.goto('http://127.0.0.1:15174');
+  await page.getByLabel('Token de acces', { exact: true }).fill(process.env.PARKING_E2E_TOKEN!);
+  await page.getByRole('button', { name: 'Conectează API', exact: true }).click();
+  const sensor = page.getByRole('region', { name: 'Senzor fizic v1.0' });
+  await expect(sensor.getByText('P01 liber (raportat de placă)', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Intrare vehicul', exact: true })).toBeDisabled();
+  await expect(page.getByRole('heading', { name: 'Situația parcării' })).toHaveCount(0);
+  occupied = true;
+  await expect(sensor.getByText('P01 ocupat (raportat de placă)', { exact: true })).toBeVisible();
+  unavailable = true;
+  await expect(sensor.getByText('P01 necunoscut', { exact: true })).toBeVisible();
+});
+
 test('React → HTTP adapter → Vite proxy → FastAPI: enter, pay, exit', async ({ page }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', error => pageErrors.push(error.message));

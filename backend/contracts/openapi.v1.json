@@ -526,6 +526,59 @@
           }
         ]
       }
+    },
+    "/api/v1/diagnostics/legacy": {
+      "get": {
+        "operationId": "getLegacyTelemetry",
+        "x-implemented": true,
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyTelemetry"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service or persistence unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ParkingBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1261,6 +1314,185 @@
           }
         },
         "title": "Health",
+        "type": "object"
+      },
+      "LegacyTelemetry": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "const": "hybrid-v1-readonly",
+            "default": "hybrid-v1-readonly",
+            "title": "Profile",
+            "type": "string"
+          },
+          "selected": {
+            "title": "Selected",
+            "type": "boolean"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "readOnly": {
+            "const": true,
+            "default": true,
+            "title": "Readonly",
+            "type": "boolean"
+          },
+          "unitId": {
+            "maximum": 247,
+            "minimum": 1,
+            "title": "Unitid",
+            "type": "integer"
+          },
+          "protocolVersion": {
+            "anyOf": [
+              {
+                "const": 256,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocolversion"
+          },
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "quality": {
+            "enum": [
+              "reported",
+              "unknown",
+              "stale",
+              "unavailable",
+              "incompatible",
+              "disabled"
+            ],
+            "title": "Quality",
+            "type": "string"
+          },
+          "observedAt": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observedat"
+          },
+          "ageMs": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agems"
+          },
+          "staleAfterMs": {
+            "maximum": 10000,
+            "minimum": 500,
+            "title": "Staleafterms",
+            "type": "integer"
+          },
+          "deviceHealth": {
+            "anyOf": [
+              {
+                "enum": [
+                  1,
+                  2
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Devicehealth"
+          },
+          "physicalSlotId": {
+            "const": 1,
+            "default": 1,
+            "title": "Physicalslotid",
+            "type": "integer"
+          },
+          "deviceKnown": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deviceknown"
+          },
+          "occupied": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occupied"
+          },
+          "rawRegisters": {
+            "anyOf": [
+              {
+                "items": {
+                  "maximum": 65535,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "maxItems": 6,
+                "minItems": 6,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rawregisters"
+          },
+          "freshnessGuarantee": {
+            "const": "communication-only",
+            "default": "communication-only",
+            "title": "Freshnessguarantee",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "selected",
+          "enabled",
+          "unitId",
+          "protocolVersion",
+          "connected",
+          "quality",
+          "observedAt",
+          "ageMs",
+          "staleAfterMs",
+          "deviceHealth",
+          "deviceKnown",
+          "occupied",
+          "rawRegisters",
+          "message"
+        ],
+        "title": "LegacyTelemetry",
         "type": "object"
       },
       "ParkingEvent": {

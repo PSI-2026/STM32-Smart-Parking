@@ -45,7 +45,7 @@ def register_http_handlers(application: FastAPI):
         if exc.status_code == 401:
             return error_response(401, "UNAUTHORIZED", "Autentificare necesară sau credențiale invalide.", headers=exc.headers)
         if exc.status_code == 403:
-            return error_response(403, "FORBIDDEN", "Rolul curent nu permite această acțiune.")
+            return error_response(403, "FORBIDDEN", "Rolul sau profilul curent nu permite această acțiune.")
         if exc.status_code == 503:
             return error_response(503, "SERVICE_UNAVAILABLE", "Accesul API necesită configurarea credențialelor.")
         if exc.status_code == 400:

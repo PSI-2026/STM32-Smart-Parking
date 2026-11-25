@@ -103,3 +103,13 @@ export interface ParkingApi {
   refresh: () => void;
   reset: () => void;
 }
+
+export interface LegacyTelemetry {
+  profile: 'hybrid-v1-readonly'; selected: boolean; enabled: boolean; readOnly: true;
+  unitId: number; protocolVersion: 256 | null; connected: boolean;
+  quality: 'reported' | 'unknown' | 'stale' | 'unavailable' | 'incompatible' | 'disabled';
+  observedAt: number | null; ageMs: number | null; staleAfterMs: number;
+  deviceHealth: 1 | 2 | null; physicalSlotId: 1; deviceKnown: boolean | null;
+  occupied: boolean | null; rawRegisters: number[] | null;
+  freshnessGuarantee: 'communication-only'; message: string;
+}

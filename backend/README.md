@@ -1,5 +1,9 @@
 # Backend STM32 Smart Parking
 
+Pentru placa cu firmware v1.0 verificată de Mert, vezi profilul separat
+[USB/RTU numai pentru citire](LEGACY_READONLY.md). Acesta afișează P01 fizic
+fără să activeze accesul, sesiunile sau capacitatea distribuită v2.1.
+
 Backend Python + FastAPI, cu API HTTP, persistență SQLite și simulator
 persistent pentru fluxul complet intrare/plată/ieșire. Pornește implicit
 în simulare; adaptoarele MODBUS TCP și RTU sunt disponibile opțional.

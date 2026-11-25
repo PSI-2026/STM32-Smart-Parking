@@ -22,6 +22,16 @@ from .queries import QueryService
 
 
 class ParkingService:
+    def configure_hardware_profile(self, profile):
+        if self.mode != "hardware":
+            raise ValueError("Hardware profile requires hardware mode")
+        with self.db.transaction() as connection:
+            previous = self.repository.hardware_profile(connection)
+            if previous is not None and previous[0] != profile:
+                raise ValueError("Hardware profile cannot change on an existing database; use a separate database")
+            if profile == "hybrid-v1-readonly" and self.repository.has_parking_state(connection):
+                raise ValueError("The v1 diagnostic profile requires a database without parking commands, sessions or distributed telemetry")
+            self.repository.bind_hardware_profile(connection, profile)
 
     def __init__(self, database: Database, *, mode="simulation", hourly_rate_bani=500,
                  clock_ms=None, monotonic_ms=None):

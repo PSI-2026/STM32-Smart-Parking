@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 
 from ..contracts.api import (
     ApiError, CommandRequest, CommandResult, EventPage, Health, Identifier,
@@ -38,7 +38,9 @@ def snapshot(request: Request, service: Service):
 @router.post("/commands", response_model=CommandResult, status_code=202, operation_id="submitCommand",
              responses={200: {"model": CommandResult}, **{code: errors[code] for code in (401, 403, 409, 422, 500, 503)}})
 def submit_command(body: CommandRequest, response: Response, service: Service,
-                   principal: Annotated[Principal, Depends(require_access)]):
+                   request: Request, principal: Annotated[Principal, Depends(require_access)]):
+    if request.app.state.settings.hardware_profile == "hybrid-v1-readonly":
+        raise HTTPException(403)
     authorize_command(principal, body.action.type)
     admission = service.admit(body)
     response.status_code = 200 if admission.replayed else 202

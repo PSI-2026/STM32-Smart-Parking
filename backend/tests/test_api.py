@@ -60,7 +60,7 @@ class ApiTests(unittest.TestCase):
         self.assertTrue(all(slot.occupied is None for slot in validated.slots))
         self.assertEqual(snapshot.headers["cache-control"], "no-store")
         spec = self.client.get("/openapi.json").json()
-        self.assertEqual(len(spec["paths"]), 7)
+        self.assertEqual(len(spec["paths"]), 8)
         self.assertEqual(spec["paths"]["/api/v1/commands"]["post"]["operationId"], "submitCommand")
 
     def test_controllers_resolve_service_and_configuration_per_application(self):

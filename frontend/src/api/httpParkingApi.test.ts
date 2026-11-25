@@ -10,6 +10,25 @@ const wait = () => new Promise(resolve => setTimeout(resolve, 10));
 afterEach(() => { vi.useRealTimers(); });
 
 describe('HTTP ParkingApi', () => {
+  it('reads authenticated v1 diagnostics without inventing distributed capacity', async () => {
+    const diagnostic = { profile: 'hybrid-v1-readonly', selected: true, enabled: true, readOnly: true,
+      unitId: 1, protocolVersion: 256, connected: true, quality: 'reported', observedAt: 1800000000000,
+      ageMs: 10, staleAfterMs: 2000, deviceHealth: 1, physicalSlotId: 1, deviceKnown: true,
+      occupied: false, rawRegisters: [1, 256, 1, 0, 0, 1], freshnessGuarantee: 'communication-only', message: 'v1' };
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(json(diagnostic));
+    const api = createHttpParkingApi({ fetch: fetcher });
+    api.setAccessToken('readonly-token');
+    expect((await api.readLegacyTelemetry()).occupied).toBe(false);
+    const call = fetcher.mock.calls.find(([path]) => path === '/api/v1/diagnostics/legacy');
+    expect(call).toBeDefined();
+    expect(new Headers(call?.[1]?.headers).get('Authorization')).toBe('Bearer readonly-token');
+    expect(api.getSnapshot().capacity?.available).toBeNull();
+    for (const change of [{ ageMs: 2000 }, { rawRegisters: [1, 256, 1, 1, 1, 1] }, { deviceKnown: false }]) {
+      fetcher.mockResolvedValueOnce(json({ ...diagnostic, ...change }));
+      await expect(api.readLegacyTelemetry()).rejects.toThrow();
+    }
+    api.dispose();
+  });
   it('starts unknown and uses protected HTTP snapshots instead of local demo data', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(json(unknown));
     const api = createHttpParkingApi({ fetch: fetcher });

@@ -1,6 +1,6 @@
 import Ajv2020 from 'ajv/dist/2020';
 import specification from '../../../backend/contracts/openapi.v1.json';
-import type { CommandResult, ParkingSnapshot } from './types';
+import type { CommandResult, LegacyTelemetry, ParkingSnapshot } from './types';
 
 // One schema source for backend and browser. No permissive JSON-to-DTO cast.
 const ajv = new Ajv2020({ strict: false, validateFormats: false });
@@ -9,6 +9,7 @@ export const validSnapshot = ajv.compile<ParkingSnapshot>({ $ref: 'parking-wire#
 export const validCommand = ajv.compile<CommandResult>({ $ref: 'parking-wire#/components/schemas/CommandResult' });
 export const validRequest = ajv.compile({ $ref: 'parking-wire#/components/schemas/CommandRequest' });
 export const validError = ajv.compile<{ error: { code: string; message: string; retryable: boolean } }>({ $ref: 'parking-wire#/components/schemas/ApiError' });
+export const validLegacy = ajv.compile<LegacyTelemetry>({ $ref: 'parking-wire#/components/schemas/LegacyTelemetry' });
 
 export function assertTopology(snapshot: ParkingSnapshot) {
   if (snapshot.contractVersion !== '1.0.0' || snapshot.stations.map(n => n.id).sort().join() !== 'G,S1,S2,S3,S4,S5'

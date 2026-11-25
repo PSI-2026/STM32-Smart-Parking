@@ -1,5 +1,5 @@
-import type { CommandResult, ParkingAction, ParkingApi, ParkingSnapshot } from './types';
-import { assertTopology, validCommand, validError, validRequest, validSnapshot } from './wire';
+import type { CommandResult, LegacyTelemetry, ParkingAction, ParkingApi, ParkingSnapshot } from './types';
+import { assertTopology, validCommand, validError, validLegacy, validRequest, validSnapshot } from './wire';
 
 export function unknownSnapshot(): ParkingSnapshot {
   const observation = { quality: 'unknown' as const, ageMs: null, updatedAt: null };
@@ -55,7 +55,9 @@ interface Options {
   commandTimeoutMs?: number;
 }
 
-export function createHttpParkingApi(options: Options = {}): ParkingApi & { setAccessToken: (token: string) => void; dispose: () => void } {
+export function createHttpParkingApi(options: Options = {}): ParkingApi & {
+  setAccessToken: (token: string) => void; dispose: () => void; readLegacyTelemetry: () => Promise<LegacyTelemetry>;
+} {
   const request = options.fetch ?? fetch;
   const now = options.now ?? (() => performance.now());
   const pollMs = options.pollMs ?? 500;
@@ -150,6 +152,16 @@ export function createHttpParkingApi(options: Options = {}): ParkingApi & { setA
   }
 
   return {
+    async readLegacyTelemetry() {
+      const generation = epoch;
+      const body = await json('/diagnostics/legacy');
+      if (generation !== epoch || disposed || !validLegacy(body)) throw new Error('Diagnostic v1 indisponibil.');
+      if (body.quality === 'reported' && (!body.connected || !body.enabled || !body.selected || body.deviceKnown !== true
+        || body.occupied === null || body.ageMs === null || body.ageMs >= body.staleAfterMs
+        || body.rawRegisters === null || body.rawRegisters[0] !== body.unitId || body.rawRegisters[1] !== 256
+        || body.rawRegisters[3] !== Number(body.occupied) || !(body.rawRegisters[5] & 1))) throw new Error('Diagnostic v1 incoerent.');
+      return body;
+    },
     getSnapshot: () => state,
     subscribe(listener) {
       listeners.add(listener);
