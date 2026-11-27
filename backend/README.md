@@ -9,6 +9,15 @@ persistent pentru fluxul complet intrare/plată/ieșire. Pornește implicit
 în simulare; adaptoarele MODBUS TCP și RTU sunt disponibile opțional.
 Compatibilitatea cu firmware-ul STM32 necesită validare pe dispozitiv.
 
+Pentru predarea finală și scenariul reproductibil consultați
+[HANDOFF.md](HANDOFF.md), [SCENARIOS.md](SCENARIOS.md) și
+[predarea hardware către Mert](HARDWARE_HANDOFF.md). Verificarea rapidă
+independentă de un server existent este:
+
+```sh
+uv run --project backend --locked python -B backend/scripts/verify_handoff.py
+```
+
 ## Cerințe
 
 - Python 3.12 sau mai nou.
